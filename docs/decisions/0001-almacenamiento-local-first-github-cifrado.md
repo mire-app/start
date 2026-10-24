@@ -1,7 +1,7 @@
 ---
 id: ADR-0001
 title: Almacenamiento local-first con sincronización cifrada en GitHub
-status: proposed       # proposed → accepted (solo una persona) → superseded
+status: accepted       # proposed → accepted (solo una persona) → superseded
 summary: Base de datos local por dispositivo y copia maestra cifrada en un repositorio privado de GitHub separado, sincronizada cada 5 min
 ---
 
