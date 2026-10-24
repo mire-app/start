@@ -27,9 +27,10 @@
 1. SPEC-0001 — Product vision and MVP (TO-BE).
 2. SPEC-0002 — Technology stack (with ADR-0002) and `.arda/checks.sh`.
 3. SPEC-0003 — Brand identity and design system (with ADR-0003).
-4. SPEC-0004 — Data model and CSV/Excel import.
+4. SPEC-0004 — Data model and import engines (BBVA xlsx, MyInvestor xlsx/PDF, generic CSV/xlsx), with ADR-0004. No UI.
 5. SPEC-0005 — GDPR and security baseline.
 6. SPEC-0006 — Accounts, transactions, transfers and investments.
 7. SPEC-0007 — Categories and rules.
 8. SPEC-0008 — Local-first encrypted sync.
 9. SPEC-0009 — Dashboard.
+10. SPEC-0010 — Import wizard (UI for SPEC-0004 engines).
