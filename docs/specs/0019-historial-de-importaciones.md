@@ -4,7 +4,7 @@ title: Historial de importaciones y deshacer
 status: draft          # draft → approved (solo una persona) → implemented
 summary: Lista de importaciones en la pantalla Importar con estado y botón Deshacer, explicando sus efectos y los bloqueos por importaciones posteriores
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0006, SPEC-0010, SPEC-0011, SPEC-0012, SPEC-0015, SPEC-0016]
+refs: [SPEC-0001, SPEC-0006, SPEC-0010, SPEC-0011, SPEC-0012, SPEC-0015, SPEC-0016, SPEC-0020]
 ---
 
 # SPEC-0019 · Historial de importaciones y deshacer
@@ -28,6 +28,7 @@ Ver todas las importaciones hechas y **deshacer** cualquiera de ellas desde la a
   - número importado (`imported_count`): «N movimientos» o «N valoraciones», según el formato;
   - estado: «Activa» o «Deshecha (dd/mm/aaaa)».
 - **Estado vacío**: «Aún no has importado nada».
+- **Enlace a un lote**: `#/importar?lote=<id>` desplaza la lista hasta ese lote, cargando más páginas si hace falta, y le da el foco. Lo usan «Ir a esa importación» y el aviso de importación duplicada de SPEC-0020.
 
 ### 2. Deshacer
 - **Botón «Deshacer»**: solo en las activas. Abre un diálogo con los efectos concretos del lote (`history.impact(batchId)`):
@@ -67,7 +68,9 @@ Ver todas las importaciones hechas y **deshacer** cualquiera de ellas desde la a
    - tras importar `myinvestor-extracto.pdf`, después `-v2.pdf` con «Reemplazar» y luego `-v3.pdf` con «Reemplazar» (siempre en LU0000000001), deshacer v2 muestra el mensaje con «myinvestor-extracto-v3.pdf»;
    - «Ir a esa importación» deja el foco en la fila de `myinvestor-extracto-v3.pdf`;
    - deshacer v3 deja el grupo en `5.980,19 €`, y después deshacer v2 lo deja en `5.930,31 €`.
-4. **CA-04** · Paginación (Vitest de componente con `history.list` simulado y 51 lotes): se muestran 50 y «Cargar más»; al pulsarlo aparece el 51.º y desaparece el botón.
+4. **CA-04** · Paginación y enlace (Vitest de componente con `history.list` simulado y 51 lotes):
+   - se muestran 50 y «Cargar más»; al pulsarlo aparece el 51.º y desaparece el botón;
+   - con `#/importar?lote=<id del 51.º>`, la lista carga la segunda página y da el foco a esa fila.
 5. **CA-05** · `history.impact` (Vitest) devuelve los recuentos correctos para un lote de movimientos con un traspaso externo y para un lote de PDF con 1 reemplazo.
 6. **CA-06** · Errores (Vitest de componente): si `import.revert` devuelve `already_reverted`, se muestra el mensaje y se vuelve a pedir `history.list`; con un código desconocido se muestra el mensaje genérico.
 7. **CA-07** · axe sin infracciones en la lista y el diálogo (claro y oscuro); sin scroll horizontal a 375 px.

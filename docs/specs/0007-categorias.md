@@ -84,6 +84,7 @@ Las reglas por concepto son de SPEC-0018.
 
 ### 2. Siembra (`categories.seedDefaults`)
 - **Qué hace**: inserta la lista y sus equivalencias en una transacción, **solo si la tabla `category` no tiene ninguna fila** (tampoco borradas). Si tiene alguna, no hace nada.
+- **Reloj**: se ejecuta con `sync_ctx.mode = 'seed'` (SPEC-0008). Si la captura está activa, los relojes de lo sembrado son `SEED_HLC` y no se encola nada; si no, el reloj implícito es su `created_at` fijo.
 - **Cuándo**: en **cada desbloqueo**. `SecurityGate` espera a que termine **antes** de mostrar la app.
   - Si falla (por ejemplo, la base está bloqueada por otra pestaña, SPEC-0002), la app se muestra igualmente y se vuelve a intentar en el siguiente desbloqueo.
   - Así cubre las instalaciones ya configuradas y el borrado total con nueva configuración (SPEC-0013).

@@ -4,7 +4,7 @@ title: Privacidad: exportación, borrado y aviso
 status: draft          # draft → approved (solo una persona) → implemented
 summary: Exportación completa en .zip (JSON + CSV seguros para Excel), borrado de todos los datos del dispositivo con destrucción de la clave local, aviso de privacidad es/en y telemetría cero verificada
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0014, ADR-0005]
+refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0008, SPEC-0014, SPEC-0020, ADR-0005]
 ---
 
 # SPEC-0013 · Privacidad: exportación, borrado y aviso
@@ -39,7 +39,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
 - **Acceso**: pide la **contraseña maestra o el código de recuperación**, aunque la app esté desbloqueada. El código solo se **verifica**; **no se consume** (solo se invalida al completar una recuperación, SPEC-0014).
 - **Fichero**: genera en el navegador, con `fflate` (MIT, versión exacta), `mire-export-AAAAMMDD.zip`, y lo descarga.
 - **`mire.json`**: `{ format: 'mire-export', version: 1, schemaVersion, exportedAt, tables: { <tabla>: [filas vivas] } }`.
-  - Las tablas se **enumeran dinámicamente** desde `sqlite_master` (`type='table'`), excluyendo `schema_migrations`, las `sqlite_%` y las tablas locales de sincronización `sync_%` (SPEC-0008).
+  - Las tablas se **enumeran dinámicamente** desde `sqlite_master` (`type='table'`), excluyendo `schema_migrations`, las `sqlite_%` y las tablas locales de sincronización `sync_*` (SPEC-0008), con `LIKE 'sync\_%' ESCAPE '\'`.
   - Solo se incluyen filas con `deleted_at IS NULL`.
   - Importes en céntimos y fechas ISO.
 - **CSV legibles en Excel**: `cuentas.csv`, `movimientos.csv`, `valoraciones.csv` y `categorias.csv`.
@@ -63,7 +63,8 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
   3. se borran las cachés del *service worker* salvo la de la estructura de la app;
   4. se cierran las conexiones a `mire-keys` y `indexedDB.deleteDatabase('mire-keys')`; un evento `blocked` cuenta como fallo. Es la **destrucción de la clave en este dispositivo**.
 - **Resultado**: la app recarga y muestra la bienvenida de SPEC-0005.
-- **Gancho para SPEC-0008**: `eraseAll({ remote })`; con `remote: true` devuelve `remote_not_available` sin borrar nada.
+- **Remoto**: `eraseAll({ remote })`; con `remote: true` devuelve `remote_not_available` sin borrar nada (el repositorio se elimina en GitHub, SPEC-0020).
+- **Con la sincronización activa** (SPEC-0008): `eraseAll` llama antes a `sync.stop()`, para que ningún ciclo en curso choque con el borrado.
 
 ### 3. Aviso de privacidad (`privacidad.html`, tercera entrada de Vite)
 - **Configuración en la PWA**: se añade `/privacidad\.html$/` al `navigateFallbackDenylist`, y la página incluye el script de tema de SPEC-0003. Su CSP la pone el plugin de SPEC-0014.
@@ -102,7 +103,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
 ## Criterios de aceptación
 1. **CA-01** · Exportación (Vitest, Node, SQLite en memoria). Datos de partida: 2 cuentas, 3 movimientos (uno con el concepto `=HYPERLINK("http://x";"y")`, otro con `Café; "bueno"` y otro de −51,56 € del 05/09/2026), 1 valoración, 1 categoría y 1 movimiento borrado. Resultado:
    - el `.zip` contiene `mire.json` y los 4 CSV;
-   - las claves de `tables` son exactamente las tablas de SPEC-0004 menos `schema_migrations`;
+   - las claves de `tables` son exactamente las tablas de SPEC-0004 menos `schema_migrations` y las `sync_*`;
    - el movimiento borrado no aparece;
    - `movimientos.csv` empieza por BOM, el campo CSV del concepto peligroso es exactamente `"'=HYPERLINK(""http://x"";""y"")"` (prefijo `'` y entrecomillado RFC 4180), `Café; "bueno"` aparece como `"Café; ""bueno"""`, y el importe aparece como `-51,56` **sin** `'`, con la fecha `05/09/2026`;
    - ningún fichero contiene `github_pat_` ni el anillo de claves.

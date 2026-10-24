@@ -42,7 +42,7 @@ Cambios documentales que acompañan a esta spec:
 - `docs/project-context.md`: se añade en «Current state» la línea «Storage (ADR-0001, proposed)…»; el backlog pasa a decir «SPEC-0002 — … (with ADR-0002)» y se añaden las specs de funcionalidad SPEC-0006 a SPEC-0009.
 
 ### Usuarios y uso
-- **Un único usuario** en el MVP: el propietario. Sin registro público ni invitaciones.
+- **Un único usuario** en el MVP: el propietario. Sin registro público ni invitaciones. Otra persona puede usar Míre con **su propia copia**: sus datos, su cuenta de GitHub y su repositorio (SPEC-0020); no se comparten datos entre personas.
 - Visión futura (fuera del MVP): **hogar** con roles *administrador + miembros*. El modelo de datos del MVP no debe impedir añadirlo después.
 
 ### Plataforma, idioma y moneda
@@ -152,7 +152,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
-- **Sincronización multidispositivo**: fusionar cambios y resolver conflictos es la parte más compleja del MVP. Mitigación: la librería se elige en SPEC-0002 y el diseño de fusión y conflictos se hace en SPEC-0008 (p. ej. registro de operaciones en lugar de copias completas).
+- **Sincronización multidispositivo**: fusionar cambios y resolver conflictos es la parte más compleja del MVP. Mitigación: registro de cambios por campo con fusión «gana el último» y reparaciones deterministas (ADR-0006, SPEC-0008).
 - **Sincronización al cerrar**: en web, y sobre todo en móvil, el navegador no garantiza ejecutar código al cerrar. Mitigación: la garantía real es el intervalo de 5 min y el botón; cómo se verifica se concreta en SPEC-0008.
 - **Pérdida de la clave de cifrado**: los datos serían irrecuperables. Mitigación: copia de seguridad de la clave (SPEC-0005).
 - **Token de GitHub en el navegador**: si se filtra, da acceso al repositorio de datos (cifrados). Mitigación: token cifrado (SPEC-0005) con permisos mínimos sobre un solo repositorio (SPEC-0014).
