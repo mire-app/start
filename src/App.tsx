@@ -1,8 +1,14 @@
+import ErrorIcon from '@material-symbols/svg-400/rounded/error.svg?react';
+import InfoIcon from '@material-symbols/svg-400/rounded/info.svg?react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DbError } from './db/client';
 import { SmokeStore } from './db/smoke';
-import { LANGUAGES } from './i18n';
+import { LanguageSelect, ThemeSelect } from './preferences';
+import { Button } from './ui/button';
+import { Card, CardTitle } from './ui/card';
+import { Icon } from './ui/icon';
+import { TopBar } from './ui/top-bar';
 
 type StorageState =
   | { status: 'opening' }
@@ -11,7 +17,7 @@ type StorageState =
   | { status: 'error' };
 
 export default function App() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [storage, setStorage] = useState<StorageState>({ status: 'opening' });
 
   useEffect(() => {
@@ -38,42 +44,45 @@ export default function App() {
 
   return (
     <>
-      <header>
-        <h1>Míre</h1>
-        <label>
-          {t('language.label')}{' '}
-          <select
-            value={i18n.resolvedLanguage}
-            onChange={(e) => void i18n.changeLanguage(e.target.value)}
-          >
-            {LANGUAGES.map((lng) => (
-              <option key={lng} value={lng}>
-                {t(`language.${lng}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-      </header>
-      <main>
-        <h2>{t('home.title')}</h2>
-        <section aria-labelledby="storage-title">
-          <h3 id="storage-title">{t('storage.title')}</h3>
-          {storage.status === 'busy' && <p role="alert">{t('storage.busy')}</p>}
-          {storage.status === 'error' && <p role="alert">{t('storage.error')}</p>}
-          <p>
-            {t('storage.count')}:{' '}
-            <output data-testid="smoke-count">
-              {storage.status === 'ready' ? storage.count : '—'}
-            </output>
-          </p>
-          <button
-            type="button"
-            disabled={storage.status !== 'ready'}
-            onClick={() => void testStorage()}
-          >
-            {t('storage.test')}
-          </button>
-        </section>
+      <TopBar title={t('home.title')} />
+      <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+        <Card aria-labelledby="preferences-title">
+          <CardTitle id="preferences-title">{t('home.preferences')}</CardTitle>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <LanguageSelect />
+            <ThemeSelect />
+          </div>
+        </Card>
+        <Card aria-labelledby="storage-title">
+          <CardTitle id="storage-title">{t('storage.title')}</CardTitle>
+          {storage.status === 'busy' && (
+            <p role="alert" className="mb-4 flex items-start gap-2 text-text">
+              <Icon icon={InfoIcon} className="text-accent" />
+              <span className="pt-px">{t('storage.busy')}</span>
+            </p>
+          )}
+          {storage.status === 'error' && (
+            <p role="alert" className="mb-4 flex items-start gap-2 text-negative">
+              <Icon icon={ErrorIcon} />
+              <span className="pt-px">{t('storage.error')}</span>
+            </p>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p>
+              <span className="text-muted">{t('storage.count')}:</span>{' '}
+              <output data-testid="smoke-count" className="font-semibold tabular-nums">
+                {storage.status === 'ready' ? storage.count : '—'}
+              </output>
+            </p>
+            <Button
+              variant="secondary"
+              disabled={storage.status !== 'ready'}
+              onClick={() => void testStorage()}
+            >
+              {t('storage.test')}
+            </Button>
+          </div>
+        </Card>
       </main>
     </>
   );

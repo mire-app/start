@@ -2,10 +2,25 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Theme before the first paint (SPEC-0003 §7). Same rules as src/design/theme.ts.
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem('mire.theme');
+        } catch (e) {}
+        if (t !== 'light' && t !== 'dark') {
+          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0B132B" />
     <title>Míre</title>
     <!-- vite-plugin-pwa injects the manifest link and the service worker registration at build time. -->
-    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   </head>
   <body>
     <div id="root"></div>
