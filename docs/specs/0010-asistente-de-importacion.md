@@ -85,7 +85,7 @@ El historial y «Deshacer» van en SPEC-0019; el mapeo de columnas para otros ba
 - **Valoraciones** (PDF): una fila por posición (nombre, participaciones y valor) con el selector **«Importar» / «Omitir»**, y en las duplicadas **«Omitir»** (por defecto) / **«Reemplazar»**.
 - **«Nuevos (N)»**, plegado por defecto con un resumen. Cada fila muestra:
   - casilla de incluir, fecha, concepto y `Amount`;
-  - **categoría**: selector con `suggestedCategoryId` preseleccionado; sin categorías aparece solo «Sin categoría»;
+  - **categoría**: `CategoryPicker` (SPEC-0015) con `suggestedCategoryId` preseleccionado; sin categorías aparece solo «Sin categoría». Si la sugerencia viene de una regla (`suggestedRule`, SPEC-0018), la fila muestra la nota «Por la regla «X»»;
   - **«Aportación externa»**: solo en filas con importe > 0. Es **excluyente** con «Es un traspaso»: si la fila está en un traspaso activado, el interruptor queda deshabilitado, y al revés.
 - **Pie**: «Se importarán N movimientos (ingresos X, gastos Y), T traspasos y V valoraciones; se omitirán D».
   - N: filas incluidas, traspasos incluidos;

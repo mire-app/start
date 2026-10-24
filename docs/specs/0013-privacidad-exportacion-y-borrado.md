@@ -69,7 +69,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
 - **Configuración en la PWA**: se añade `/privacidad\.html$/` al `navigateFallbackDenylist`, y la página incluye el script de tema de SPEC-0003. Su CSP la pone el plugin de SPEC-0014.
 - **Acceso**: desde la bienvenida (sin configurar) y desde el menú (**«Privacidad» / «Privacy»**). Funciona sin conexión.
 - **Contenido** (es/en, tono de `docs/brand.md`, breve):
-  - qué datos se guardan: cuentas, movimientos, valoraciones, categorías y ajustes;
+  - qué datos se guardan: cuentas, movimientos, valoraciones, categorías, reglas, plantillas de importación y ajustes;
   - dónde:
     - en el navegador del dispositivo, **sin cifrar**: su protección **depende de que el dispositivo esté cifrado y bloqueado**, y el PIN de Míre solo bloquea la interfaz;
     - si se activa la sincronización, **cifrados** en el repositorio privado de GitHub del usuario;

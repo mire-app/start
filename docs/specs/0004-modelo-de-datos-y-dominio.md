@@ -2,9 +2,9 @@
 id: SPEC-0004
 title: Modelo de datos, base de datos y dominio
 status: draft          # draft → approved (solo una persona) → implemented
-summary: Base de datos real /mire.sqlite3 con migraciones, API del worker con transacciones, esquema (cuentas, grupos, movimientos, traspasos, valoraciones, lotes), dominio de saldos y patrimonio, y lectura de importes y fechas; sin pantallas
+summary: Base de datos real /mire.sqlite3 con migraciones, API del worker con transacciones, esquema (cuentas, grupos, movimientos, traspasos, valoraciones, lotes, categorías, equivalencias y reglas), dominio de saldos y patrimonio, y lectura de importes y fechas; sin pantallas
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0002, ADR-0001, ADR-0002, ADR-0004]
+refs: [SPEC-0001, SPEC-0002, SPEC-0007, SPEC-0018, ADR-0001, ADR-0002, ADR-0004]
 ---
 
 # SPEC-0004 · Modelo de datos, base de datos y dominio
@@ -180,6 +180,7 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
    | `isin` en una cuenta `savings` | `CHECK` |
    | Clave ajena inexistente | `FOREIGN KEY` |
    | Dos `source_link` vivos con la misma `(source, key)` | `UNIQUE` |
+   | Dos `category_rule` vivas con el mismo `pattern_norm` | `UNIQUE` |
    | Dos valoraciones vivas con la misma `(account_id, date)` | `UNIQUE` |
    | `account.created_by_batch_id` con un lote inexistente | `FOREIGN KEY` |
 

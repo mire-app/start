@@ -69,7 +69,7 @@ Cambios documentales que acompañan a esta spec:
    - Las categorías que traiga el banco (BBVA) se usan como **sugerencia** mediante una tabla de equivalencias editable.
 5. **Categorías y reglas**:
    - Categorías de **dos niveles** (categoría › subcategoría), con una **lista inicial predefinida** que el usuario puede editar.
-   - Reglas automáticas por texto del concepto (p. ej. «MERCADONA» → Alimentación › Supermercado) que se aplican al importar y pueden aplicarse a movimientos existentes.
+   - Reglas automáticas por texto del concepto (p. ej. «MERCADONA» → Compras › Alimentación) que se aplican al importar y pueden aplicarse a movimientos existentes.
 6. **Inversiones (solo valor)**: el valor de cada cuenta de inversión se actualiza importando la cartera de MyInvestor (sin valoración manual); se guarda el histórico de valoraciones. Sin operaciones de compra/venta.
 7. **Panel**:
    - **Patrimonio** total (cuentas + efectivo + inversiones), desglose por cuenta y tipo, y evolución mensual.

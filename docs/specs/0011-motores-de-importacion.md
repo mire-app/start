@@ -145,8 +145,8 @@ Para cada fila, ya con su cuenta asignada o la cuenta nueva con un **id provisio
   - cada movimiento está en un único par;
   - **no se aplica** si no se acepta.
 - **Sugerencia de categoría**:
-  1. gancho `suggestCategory(row)` (SPEC-0007; hasta entonces no devuelve nada);
-  2. `category_map(source, sourceCategory)`;
+  1. gancho `suggestCategory(row)` (SPEC-0018; hasta entonces no devuelve nada), que da también `suggestedRule`;
+  2. `category_map(source, sourceCategory)`, donde `source` es el `source` del lote (`plan.source`);
   3. ninguna.
 - **Apertura** (solo si las filas traen saldo y la cuenta no tiene movimientos vivos): se sugiere `opening = saldo(primera fila cronológica) − importe(primera fila)`, con `opening_date` igual a esa fecha.
 - **Casi duplicado** (`nearDuplicate`): ya existe un movimiento vivo en la misma cuenta, fecha e importe pero con otro concepto normalizado. Es solo un aviso suave: `include` sigue siendo verdadero.
@@ -164,7 +164,7 @@ type ImportPlan = {
   rows: { row: number; sheetRow: number; sourceKey: string; accountId: string; date: string; valueDate?: string; amountCents: number;
           description: string; note?: string; sourceCategory?: string; fingerprint: string;
           duplicate: boolean; nearDuplicate: boolean; include: boolean;
-          suggestedCategoryId?: string; suggestedBy?: 'rule' | 'bank' }[];
+          suggestedCategoryId?: string; suggestedBy?: 'rule' | 'bank'; suggestedRule?: { id: string; pattern: string } }[];
   transferSuggestions: { id: string; a: Side; b: Side; deltaDays: number }[];
   errors: { row: number; sheetRow: number; code: string }[];
   valuations?: ValuationPlan[];   // SPEC-0012
@@ -271,7 +271,7 @@ Los repositorios de lotes (`createBatch`, `insertImportedMovements`, `revertBatc
 
 ## Fuera de alcance
 - Pantallas del asistente: SPEC-0010. PDF de cartera: SPEC-0012.
-- Motor de reglas, lista de categorías y edición de `category_map`: SPEC-0007.
+- Lista de categorías y edición de `category_map`: SPEC-0007. Motor de reglas: SPEC-0018.
 - `.xls`, multimoneda y formatos predefinidos de otros bancos.
 
 ## Criterios de aceptación

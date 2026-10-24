@@ -2,9 +2,9 @@
 id: SPEC-0007
 title: Categorías: lista inicial, gestión, equivalencias del banco y recategorización
 status: draft          # draft → approved (solo una persona) → implemented
-summary: Lista inicial de dos niveles basada en BBVA con iconos y equivalencias sembradas, pantalla de categorías (crear, renombrar, icono, borrar moviendo movimientos), equivalencias editables con las categorías del banco, selector común y categorización múltiple en Movimientos
+summary: Lista inicial de dos niveles basada en BBVA con iconos y equivalencias sembradas de forma idempotente, pantalla de categorías (crear, renombrar, icono, borrar moviendo movimientos), equivalencias editables con las categorías del banco y categorización múltiple en Movimientos
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0008, SPEC-0010, SPEC-0011, SPEC-0013, SPEC-0015, SPEC-0016, SPEC-0018]
+refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0008, SPEC-0010, SPEC-0011, SPEC-0013, SPEC-0015, SPEC-0016, SPEC-0017, SPEC-0018, SPEC-0019]
 ---
 
 # SPEC-0007 · Categorías: lista inicial, gestión, equivalencias del banco y recategorización
@@ -23,33 +23,41 @@ Las reglas por concepto son de SPEC-0018.
   - tabla `category` (`parent_id`, `system_key`, `name`, `icon`, `archived_at`) con el trigger `category_depth`;
   - tabla `category_map` (`source`, `source_category`, `category_id`);
   - `movement.category_id` y `movement.source_category`;
-  - `upsertCategoryMap`.
+  - `upsertCategoryMap`;
+  - columnas comunes (`id`, `created_at`, `updated_at`, `deleted_at`).
 - `SPEC-0011`:
   - `sourceCategory` con el formato `Categoría›Subcategoría`, sin espacios alrededor de `›`;
-  - sugerencia por `category_map` con `suggestedBy = 'bank'`.
-  - Fichero `bbva-informe.xlsx`, con estas categorías: `Salarios, rentas y subsidios›Nómina`, `No categorizable›No asociable a gasto o ingreso` (filas 2, 7 y 8), `No categorizable›Autotransferencia recibida` (fila 3), `Transporte›Combustible`, `Ocio›Bares y restaurantes` (filas 5 y 6) y `Otros ingresos›Ingresos varios`.
-- `SPEC-0010`:
-  - selector de categoría en la revisión;
-  - `categories.list`;
-  - test de paridad `src/i18n/keys.test.ts`.
-- `SPEC-0015`: lista de movimientos con filtro de categoría y `listMovements`, y campo de categoría en el diálogo de edición.
-- `SPEC-0005`: configuración inicial. `SPEC-0013`: borrado total y exportación (`categorias.csv`). `SPEC-0016`: router y Ajustes. `SPEC-0006`: barra inferior.
+  - sugerencia por `category_map(plan.source, sourceCategory)` con `suggestedBy = 'bank'`.
+  - En el fichero sintético `bbva-informe.xlsx`, las categorías del banco son:
+    - «ABONO NOMINA EJEMPLO»: `Salarios, rentas y subsidios›Nómina`;
+    - «TRASPASO A CUENTA», «TRANSFERENCIA A MYINVESTOR» y «… B»: `No categorizable›No asociable a gasto o ingreso`;
+    - «TRASPASO DESDE CUENTA»: `No categorizable›Autotransferencia recibida`;
+    - «GASOLINERA EJEMPLO»: `Transporte›Combustible`;
+    - los dos «CAFETERIA EJEMPLO»: `Ocio›Bares y restaurantes`;
+    - «INGRESO EJEMPLO»: `Otros ingresos›Ingresos varios`.
+- `SPEC-0015`:
+  - lista con filtro de categoría (una categoría incluye sus subcategorías) y `listMovements`;
+  - **`CategoryPicker`** y `categoryLabel`, cuyo contrato esta spec no cambia.
+- `SPEC-0010`: revisión de la importación y `categories.list`; test de paridad `src/i18n/keys.test.ts`.
+- `SPEC-0005`: `SecurityGate` y desbloqueo. `SPEC-0013`: borrado total y exportación (`categorias.csv`). `SPEC-0016`: router, regla de transiciones y Ajustes. `SPEC-0006`: barra inferior.
 - **Decisiones del propietario** (2026-10-24):
   - lista inicial basada en la de BBVA;
   - las categorías neutras de BBVA («No categorizable › …») **no se crean**, y esos movimientos quedan sin categoría;
   - un icono por categoría;
   - al borrar una categoría con movimientos, se elige otra o se dejan sin categoría;
   - categorización con selección múltiple;
-  - reglas en SPEC-0018.
-- **Orden de implementación**: después de SPEC-0010, SPEC-0019 y SPEC-0017.
+  - reglas en SPEC-0018;
+  - sincronización con conflictos resueltos **por campo, gana el último** (SPEC-0008).
+- **Orden de implementación**: después de SPEC-0010, SPEC-0019 y SPEC-0017. El propietario ya tendrá la app configurada y con datos importados.
 
 ## Cambio (delta)
 ### 1. Lista inicial (`src/db/seed/categories.ts`)
-- **Contenido**:
-  - 10 categorías y 41 subcategorías (tabla siguiente);
-  - cada una con un **id fijo** (constante UUID en el fichero, igual en todos los dispositivos) y un `system_key`;
+- **Contenido**: 10 categorías y 41 subcategorías (tabla siguiente).
+- **Cada una lleva**:
+  - un **id fijo**, una constante UUID del fichero, igual en todos los dispositivos. Es una **excepción** a la regla UUIDv7 de SPEC-0004;
+  - un `system_key`;
   - `name` en español;
-  - `icon` en las categorías; las subcategorías lo tienen NULL y heredan el del padre.
+  - `icon` en las categorías; las subcategorías lo tienen NULL y muestran el del padre.
 
 | Categoría (`system_key`, icono) | Subcategorías |
 |---|---|
@@ -64,106 +72,110 @@ Las reglas por concepto son de SPEC-0018.
 | Impuestos y comisiones / Taxes and fees (`taxes`, `account_balance`) | Impuestos / Taxes · Comisiones bancarias / Bank fees · Multas y sanciones / Fines |
 | Otros gastos / Other expenses (`other_expenses`, `more_horiz`) | Gastos varios / Miscellaneous expenses · Retirada de efectivo / Cash withdrawal · Regalos y donaciones / Gifts and donations |
 
-- **`system_key` de las subcategorías**: `<padre>.<n>`, con `n` desde 1 en el orden de la tabla. Por ejemplo, `shopping.1` es Alimentación.
-- **Nombres en inglés**: los de la tabla, en `en.json` bajo `categories.<system_key>`. Los españoles van en `es.json`.
-- **Equivalencias sembradas**: una `category_map` por subcategoría, con `source = 'bbva_report'`, `source_category = '<Categoría>›<Subcategoría>'` (nombres españoles de la tabla) y su id fijo.
-  - Las cinco categorías del fichero de BBVA que no son neutras quedan así enlazadas.
-  - No se siembra nada para `No categorizable›…`.
+- **`system_key` de las subcategorías**: `<padre>_<n>`, con `n` desde 1 en el orden de la tabla. Por ejemplo, `shopping_1` es Alimentación y `other_expenses_1` es Gastos varios.
+- **Nombres traducidos**: claves `categoryNames.<system_key>`, que son 51 en `es.json` y 51 en `en.json`, con los textos de la tabla. Los demás textos de esta spec van bajo `categories.*`.
+- **Equivalencias sembradas**: una `category_map` por subcategoría (41), con:
+  - `source = 'bbva_report'`;
+  - `source_category = '<Categoría>›<Subcategoría>'`, con los nombres españoles de la tabla;
+  - su **id fijo**.
+
+  Con ellas quedan enlazados los 4 pares no neutros del fichero sintético, y también `Compras›Alimentación`, que aparece en `bbva-informe-parcial.xlsx`. No se siembra nada para `No categorizable›…`.
+- **Marcas de tiempo fijas**: todo lo sembrado lleva `created_at = updated_at = 2026-01-01T00:00:00.000Z`. Así, cualquier cambio real del usuario es posterior y gana en la fusión por campo de SPEC-0008.
 
 ### 2. Siembra (`categories.seedDefaults`)
-- **Qué hace**: inserta la lista inicial y sus equivalencias, en una transacción, **solo si la tabla `category` no tiene ninguna fila** (tampoco borradas). Si tiene alguna, no hace nada.
-- **Cuándo**: la llama la app al terminar la **configuración inicial** de la seguridad (SPEC-0005), también tras el borrado total y la nueva configuración (SPEC-0013).
-- **Sin migración nueva**: `db-version` sigue siendo 1, y los tests en Node que usan `migrate` no ven la lista.
-- **Restricción para SPEC-0008**: un segundo dispositivo que se une a un repositorio de datos **no** siembra; recibe las categorías por la sincronización. Los ids fijos evitan duplicados si dos dispositivos llegan a sembrar.
+- **Qué hace**: inserta la lista y sus equivalencias en una transacción, **solo si la tabla `category` no tiene ninguna fila** (tampoco borradas). Si tiene alguna, no hace nada.
+- **Cuándo**: en **cada desbloqueo**. `SecurityGate` espera a que termine **antes** de mostrar la app.
+  - Así cubre las instalaciones ya configuradas y el borrado total con nueva configuración (SPEC-0013).
+  - La comprobación es una consulta `SELECT 1 FROM category LIMIT 1`.
+- **Sin migración nueva**: `db-version` sigue siendo 1. Los tests en Node que usan `migrate` no ven la lista.
+- **Varios dispositivos** (SPEC-0008):
+  - si dos dispositivos siembran, crean filas idénticas (mismos ids, valores y marcas de tiempo), y fusionarlas no cambia nada;
+  - un renombrado o un borrado hecho en otro dispositivo tiene una marca posterior y gana.
+  - SPEC-0008 debe fusionar lo sembrado como cualquier otra fila. No requiere ninguna regla especial.
 
-### 3. Nombre visible
-- Si la categoría tiene `system_key`, se muestra la traducción `categories.<system_key>` del idioma activo.
-- Si no lo tiene, se muestra `name`.
-- **Renombrar** guarda el nuevo `name` y pone `system_key = NULL`. Desde entonces se muestra igual en los dos idiomas.
+### 3. Nombre visible (amplía `categoryLabel` de SPEC-0015)
+- **Regla**:
+  - con `system_key`, se muestra `categoryNames.<system_key>` del idioma activo;
+  - sin él, se muestra `name`.
+- **Renombrar**: guarda el nuevo `name` y pone `system_key = NULL`. Desde entonces se muestra igual en los dos idiomas.
 - **Orden**: por nombre visible, con `localeCompare` del idioma activo.
 - **Exportación** (SPEC-0013): usa `name`, así que las categorías sin renombrar salen en español. Es aceptable.
 
 ### 4. Pantalla Categorías (`#/ajustes/categorias`)
-- **Acceso**: entrada **«Categorías» / «Categories»** en el menú de `TopBar` y enlace en Ajustes. Se comporta como `#/ajustes`:
-  - sin barra inferior en el móvil (SPEC-0006: «salvo `#/ajustes` y sus subrutas»);
-  - transición `forward` al entrar y `back` al volver.
+- **Rutas nuevas** en el router de SPEC-0016:
+  - `#/ajustes/categorias`: sección 4, nivel 2;
+  - SPEC-0018 añade `#/ajustes/reglas` en el nivel 3.
+  - La regla de transición es la de SPEC-0016: desde Ajustes, `forward`; al volver, `back`.
+- **Acceso**:
+  - entrada **«Categorías» / «Categories»** en el menú de `TopBar`;
+  - enlace en Ajustes, en una sección nueva **«Organización»**, entre «Seguridad» y «Datos».
+  - Sin barra inferior en el móvil (SPEC-0006: «salvo `#/ajustes` y sus subrutas»).
+  - Se vuelve con el logotipo o con «atrás».
 - **Lista**: las categorías con su icono, cada una desplegable con sus subcategorías.
-  - Cada fila muestra el nombre visible y el número de movimientos vivos (los de sus subcategorías incluidos en el padre).
+  - Cada fila muestra el nombre visible y el número de movimientos vivos (en el padre, incluidos los de sus subcategorías).
   - Botones **«Nueva categoría»** y, en cada categoría, **«Nueva subcategoría»**.
 - **Crear y editar** (`Dialog`):
   - **«Nombre»**: obligatorio, hasta 40 caracteres;
-  - **«Icono»**, solo en categorías: rejilla de iconos;
-  - **nombres repetidos**: no puede haber dos con el mismo nombre visible (con `normalizeText`) bajo el mismo padre, o entre las categorías. Si lo hay, el error es `category_name_taken`, con el mensaje «Ya existe una categoría con ese nombre».
-- **Iconos disponibles**: 32 de Material Symbols Rounded, importados como SVG. Son los 10 de la tabla y además:
+  - **«Icono»**, solo en categorías: rejilla con los iconos permitidos. Una categoría nueva sin icono elegido recibe `more_horiz`. En las subcategorías el icono no se ofrece, y el worker guarda NULL aunque llegue uno;
+  - **nombres repetidos**: la página comprueba que no haya dos con el mismo **nombre visible** (con `normalizeText`) bajo el mismo padre, o entre las categorías. El worker comprueba lo mismo sobre `name`. El error es `category_name_taken`, con el mensaje «Ya existe una categoría con ese nombre».
+- **Iconos permitidos**: la constante `CATEGORY_ICONS` (`src/domain/categories/icons.ts`), compartida por la página y el worker. Son 32 de Material Symbols Rounded, importados como SVG:
+  - los 10 de la tabla;
   - `restaurant`, `local_cafe`, `flight`, `school`, `pets`, `child_care`, `fitness_center`, `sports_esports`;
   - `movie`, `checkroom`, `devices`, `bolt`, `water_drop`, `wifi`, `phone_iphone`, `local_gas_station`;
   - `train`, `redeem`, `volunteer_activism`, `work`, `receipt_long`, `medical_services`.
 
-  Un icono fuera de la lista da `invalid_icon`.
+  Uno fuera de la lista da `invalid_icon`.
 - **Borrar** (borrado lógico):
-  - **Diálogo**: «¿Borrar «X»?». Si la categoría tiene subcategorías: «También se borrarán sus N subcategorías».
-  - **Si tiene movimientos** (contando sus subcategorías): «Tiene M movimientos», con la opción **«Moverlos a»** (selector, por defecto) o **«Dejarlos sin categoría»**.
-  - **Destino**: no puede ser la categoría que se borra ni una de sus subcategorías; si lo es, el error es `category_move_target_invalid`.
-  - **Al confirmar**, en una transacción:
+  - **diálogo**: «¿Borrar «X»?». Si tiene subcategorías: «También se borrarán sus N subcategorías»;
+  - **si tiene movimientos** (contando sus subcategorías): «Tiene M movimientos», con **«Moverlos a»** (`CategoryPicker`, por defecto) o **«Dejarlos sin categoría»**;
+  - **destino**: no puede ser la categoría que se borra ni una de sus subcategorías; si lo es, el error es `category_move_target_invalid`;
+  - **al confirmar**, en una transacción:
     1. los movimientos pasan al destino o a NULL;
-    2. las equivalencias que apuntaban a lo borrado pasan al destino, o se borran si se dejan sin categoría;
-    3. se borran la categoría y sus subcategorías.
+    2. las equivalencias que apuntaban a lo borrado pasan al destino, o se borran;
+    3. se borran la categoría y sus subcategorías;
   - SPEC-0018 amplía este diálogo con las reglas afectadas.
-- **Fuera de la pantalla**: mover una subcategoría a otro padre y archivar categorías (`archived_at` queda sin uso).
+- **No incluido**: mover una subcategoría a otro padre y archivar categorías (`archived_at` queda sin uso).
 
 ### 5. Categorías del banco (sección de `#/ajustes/categorias`)
-- **Lista**: cada par `(origen, categoría del banco)` que aparece en movimientos vivos.
-  - Cada fila muestra:
-    - el texto del banco, con `›` entre los dos niveles;
-    - el origen (las etiquetas de formato de SPEC-0015);
-    - cuántos movimientos tiene y cuántos están sin categoría;
-    - su equivalencia actual: una categoría o «Sin categoría».
-  - Orden: por número de movimientos, de mayor a menor.
-- **Cambiar la equivalencia**: con el selector común (punto 6).
-  - Una categoría llama a `upsertCategoryMap`. «Sin categoría» borra la equivalencia (borrado lógico).
-  - Casilla **«Aplicar también a los K movimientos sin categoría con esta categoría del banco»**, desmarcada por defecto. Solo cambia los que **no tienen** categoría; nunca toca los ya categorizados.
-  - Sin la casilla, el cambio solo afecta a las importaciones futuras.
+- **Lista**: cada par `(origen, categoría del banco)` que aparece en movimientos vivos. El origen es `import_batch.source` del movimiento (el mismo `source` que usa la sugerencia de SPEC-0011).
+- **Cada fila muestra**:
+  - el texto del banco;
+  - la etiqueta de formato (SPEC-0015);
+  - cuántos movimientos tiene y cuántos están sin categoría;
+  - su equivalencia: una categoría o «Sin categoría».
+- **Orden**: por número de movimientos, de mayor a menor.
+- **Cambiar la equivalencia**, con `CategoryPicker`:
+  - una categoría llama a `upsertCategoryMap`; «Sin categoría» borra la equivalencia (borrado lógico);
+  - casilla **«Aplicar también a los K movimientos sin categoría con esta categoría del banco»**, desmarcada por defecto. Solo cambia los que **no tienen** categoría. Está deshabilitada si se elige «Sin categoría»;
+  - sin la casilla, el cambio solo afecta a importaciones futuras.
 
-### 6. Selector común `CategoryPicker` (`src/components/CategoryPicker.tsx`)
-- **Forma**: combobox accesible (patrón ARIA *combobox* con lista), con:
-  - búsqueda por nombre visible (con `normalizeText`);
-  - grupos por categoría, con iconos;
-  - la opción **«Sin categoría»** primero;
-  - se puede elegir una categoría o una subcategoría.
-- **Dónde se usa**:
-  - revisión de importación (SPEC-0010);
-  - diálogo de edición del movimiento (SPEC-0015);
-  - categorización múltiple (punto 7);
-  - destino al borrar;
-  - equivalencias;
-  - reglas (SPEC-0018).
-- **Sustituye** a los selectores simples de SPEC-0010 y SPEC-0015 y conserva su etiqueta accesible («Categoría» / «Category»).
-
-### 7. Categorización múltiple en Movimientos (`#/movimientos`, SPEC-0015)
+### 6. Categorización múltiple en Movimientos (`#/movimientos`, SPEC-0015)
 - **Modo selección**: botón **«Seleccionar»** en la cabecera de la lista.
-  - Cada fila muestra una casilla, etiquetada con fecha, concepto e importe, y pulsar la fila la marca en vez de abrir el detalle.
+  - Cada fila muestra una casilla, etiquetada con fecha, concepto e importe. Pulsar la fila la marca, en vez de abrir el detalle.
   - **«Cancelar»** o `Esc` salen del modo.
-- **Barra de acción** (fija; en el móvil, encima de la barra inferior): «N seleccionados», **«Categorizar»** y **«Cancelar»**.
-  - Si el filtro tiene más resultados que los cargados, aparece el enlace **«Seleccionar los T que cumplen el filtro»**.
+- **Barra de acción** (fija; en el móvil, encima de la barra inferior):
+  - «N seleccionados», **«Categorizar»** y **«Cancelar»**;
+  - si el filtro tiene más resultados que los cargados, el enlace **«Seleccionar los T que cumplen el filtro»**.
 - **«Categorizar»**: abre `CategoryPicker`. Al elegir, se llama a `movements.setCategory`, en una transacción.
-  - Aviso (`Toast`): «N movimientos categorizados», con **«Deshacer»** durante 10 s. «Deshacer» llama a `movements.restoreCategories` con lo que devolvió `setCategory`.
+  - Se categorizan todos los seleccionados, traspasos incluidos.
+  - Aviso (`Toast`): «N movimientos categorizados», con **«Deshacer»** durante 10 s, que llama a `movements.restoreCategories` con lo que devolvió `setCategory`.
   - La lista se refresca con el filtro actual.
 
-### 8. API del worker y repositorios (`src/db/repo/categories.ts`)
+### 7. API del worker y repositorios (`src/db/repo/categories.ts`)
 **Categorías**:
-- `categories.seedDefaults()`;
-- `categories.list()` → `{ id, parentId, systemKey, name, icon, movementCount }[]`, solo las vivas (amplía el de SPEC-0010);
-- `categories.create({ parentId?, name, icon? })` y `categories.update(id, { name?, icon? })`.
-  - Errores: `category_name_taken`, `category_name_empty`, `invalid_icon` y `category_depth`.
-  - La unicidad se comprueba en la página con los nombres visibles. El worker compara `name` y `system_key` de los hermanos, con `normalizeText`.
-- `categories.delete(id, { moveTo: string | null })`; error `category_move_target_invalid`.
+- `categories.seedDefaults()`.
+- `categories.list()` → `{ id, parentId, systemKey, name, icon, movementCount }[]`, solo las vivas. Amplía el de SPEC-0010.
+- `categories.create({ parentId?, name, icon? })` y `categories.update(id, { name?, icon? })`. Errores: `category_name_taken`, `category_name_empty`, `invalid_icon` y `category_depth`.
+- `categories.delete(id, { moveTo: string | null })`. Error: `category_move_target_invalid`.
 
 **Equivalencias**:
-- `categoryMap.observed()` → `{ source, sourceCategory, movementCount, uncategorizedCount, categoryId: string | null }[]`;
+- `categoryMap.observed()` → `{ source, sourceCategory, movementCount, uncategorizedCount, categoryId: string | null }[]`.
 - `categoryMap.set(source, sourceCategory, categoryId | null, { applyToUncategorized })` → `{ updated }`.
 
 **Movimientos**:
-- `movements.setCategory(target: { ids: string[] } | { filter: ListFilter }, categoryId | null)` → `{ previous: { id, categoryId }[] }`. `ListFilter` son los filtros de `listMovements` (SPEC-0015).
+- `movements.setCategory(target, categoryId | null)` → `{ previous: { id, categoryId }[] }`.
+  - `target` es `{ ids: string[] }` o `{ filter: ListFilter }`.
+  - `ListFilter` son los filtros de `listMovements` (SPEC-0015) **sin** `limit` ni `offset`.
 - `movements.restoreCategories(previous)`.
 
 **Textos**: todos tienen clave en `es.json` y `en.json`.
@@ -171,33 +183,39 @@ Las reglas por concepto son de SPEC-0018.
 ## Fuera de alcance
 - Reglas por concepto: SPEC-0018.
 - Mover subcategorías de padre, archivar categorías, colores por categoría y presupuestos.
-- Equivalencias sembradas para otros orígenes distintos de BBVA.
+- Equivalencias sembradas para orígenes distintos de BBVA.
 
 ## Criterios de aceptación
-Los e2e parten de la seguridad configurada y sin datos. Como máximo hay 3 ficheros e2e:
+**Datos de partida**: los e2e parten de la seguridad configurada, sin datos y en español. Si cambian de idioma, vuelven a español antes de seguir.
+
+**Ficheros e2e** (como máximo 3):
 - `categorias.spec.ts`: CA-02, CA-03, CA-05, CA-06 y CA-07, encadenados;
 - `categorias-gestion.spec.ts`: CA-04;
-- `categorias-a11y.spec.ts`: CA-11.
+- `categorias-a11y.spec.ts`: CA-11. Importa antes `bbva-informe.xlsx` para tener movimientos.
 
 1. **CA-01** · Siembra (Vitest, Node, SQLite en memoria tras `migrate`):
-   - `seedDefaults` crea 10 categorías y 41 subcategorías con los ids, `system_key` e iconos de `src/db/seed/categories.ts`;
-   - crea 41 equivalencias `bbva_report`, entre ellas `Transporte›Combustible → transport.1` y `Ocio›Bares y restaurantes → leisure.1`, y ninguna para `No categorizable›…`;
+   - `seedDefaults` crea 10 categorías y 41 subcategorías con los ids, `system_key`, iconos y marcas de tiempo de `src/db/seed/categories.ts`;
+   - crea 41 equivalencias `bbva_report` con ids fijos, entre ellas `Transporte›Combustible → transport_1`, `Ocio›Bares y restaurantes → leisure_1` y `Compras›Alimentación → shopping_1`, y ninguna para `No categorizable›…`;
    - una segunda llamada no hace nada;
-   - con una categoría ya creada (aunque esté borrada), no hace nada.
-2. **CA-02** · Siembra al configurar (e2e):
-   - tras configurar la seguridad, Categorías muestra las 10 categorías y Diagnóstico sigue mostrando `db-version` = 1;
+   - con una categoría ya creada (aunque esté borrada), no hace nada;
+   - dos bases sembradas por separado tienen filas idénticas, campo a campo, en `category` y `category_map`.
+2. **CA-02** · Siembra al desbloquear (e2e):
+   - tras configurar la seguridad, `#/ajustes/categorias` muestra las 10 categorías, y Diagnóstico sigue mostrando `db-version` = 1;
    - en inglés aparecen «Shopping» y «Groceries».
+   - (Vitest de componente) `SecurityGate` no muestra la app hasta que `seedDefaults` resuelve.
 3. **CA-03** · Importar con equivalencias (e2e, a continuación):
-   - al importar `bbva-informe.xlsx` (SPEC-0010), la revisión preselecciona categoría en las filas 1, 4, 5, 6 y 9, y «Sin categoría» en las 2, 3, 7 y 8;
+   - al importar `bbva-informe.xlsx` (SPEC-0010) sin activar traspasos, la revisión preselecciona categoría en «ABONO NOMINA EJEMPLO», «GASOLINERA EJEMPLO», los dos «CAFETERIA EJEMPLO» e «INGRESO EJEMPLO», y «Sin categoría» en los otros cuatro;
    - tras importar, Movimientos con el filtro «Sin categoría» muestra 4.
    - Cubre SPEC-0001 CA-08 (categorías).
-4. **CA-04** · Gestión (e2e, contexto nuevo):
+4. **CA-04** · Gestión y navegación (e2e, contexto nuevo):
    - crear «Mascotas» con el icono `pets` y la subcategoría «Veterinario» las muestra en la lista;
    - crear «compras» da «Ya existe una categoría con ese nombre»;
-   - renombrar «Compras» a «Supermercado y compras» muestra ese nombre también en inglés.
+   - renombrar «Compras» a «Supermercado y compras» muestra ese nombre también en inglés;
+   - a 375 px, `#/ajustes/categorias` no muestra la barra inferior;
+   - con el espía de SPEC-0003, ir desde Ajustes usa `vt-forward`, y «atrás» usa `vt-back`.
 5. **CA-05** · Categorización múltiple (e2e, a continuación de CA-03):
-   - con el filtro «Sin categoría», seleccionar las filas de 500,00 y 120,00 y categorizarlas como «Otros gastos › Gastos varios» muestra «2 movimientos categorizados», y el filtro muestra 2;
-   - «Deshacer» vuelve a dejar 4.
+   - con el filtro «Sin categoría», seleccionar «TRANSFERENCIA A MYINVESTOR» y «TRANSFERENCIA A MYINVESTOR B» y categorizarlos como «Otros gastos › Gastos varios» muestra «2 movimientos categorizados», y el filtro «Sin categoría» queda en 2;
+   - «Deshacer» lo devuelve a 4.
 6. **CA-06** · Equivalencias (e2e, a continuación):
    - «Categorías del banco» muestra `No categorizable›No asociable a gasto o ingreso` con 3 movimientos, 3 sin categoría y «Sin categoría»;
    - asignarle «Otros gastos › Gastos varios» con «Aplicar también a los 3 movimientos» deja el filtro «Sin categoría» en 1 y «Gastos varios» en 3.
@@ -205,25 +223,25 @@ Los e2e parten de la seguridad configurada y sin datos. Como máximo hay 3 fiche
    - borrar «Ocio» avisa de sus 5 subcategorías y de 2 movimientos;
    - moverlos a «Otros gastos › Gastos varios» deja ese filtro en 5;
    - la equivalencia `Ocio›Bares y restaurantes` muestra ahora «Gastos varios».
-8. **CA-08** · Borrar y destino (Vitest, Node):
+8. **CA-08** · Borrar, destino y errores (Vitest, Node):
    - con «Dejarlos sin categoría», los movimientos quedan con `category_id` NULL y las equivalencias que apuntaban a la categoría se borran;
    - un destino que es una subcategoría de la que se borra da `category_move_target_invalid` y no cambia nada;
    - `invalid_icon`, `category_name_empty` y `category_name_taken` se comprueban en `create`;
+   - una subcategoría creada con icono queda con `icon` NULL;
    - `movements.setCategory` con `{ filter }` cambia exactamente los que devuelve `listMovements` con ese filtro, y `restoreCategories` deja cada uno como estaba.
-9. **CA-09** · `CategoryPicker` (Vitest de componente):
-   - escribir «gaso» muestra solo «Transporte › Combustible»;
-   - con el teclado se llega a una opción y se elige con `Enter`;
-   - «Sin categoría» es la primera opción;
-   - el nombre de una categoría renombrada se muestra tal cual en los dos idiomas.
-10. **CA-10** · `src/i18n/keys.test.ts` pasa, con las 51 claves `categories.*` en los dos idiomas.
+9. **CA-09** · Nombre visible (Vitest):
+   - `categoryLabel` de una categoría sembrada da «Compras» en español y «Shopping» en inglés;
+   - una renombrada da su `name` en los dos;
+   - el contrato de `CategoryPicker` (SPEC-0015 CA-10) sigue pasando sin cambios.
+10. **CA-10** · `src/i18n/keys.test.ts` pasa, con las 51 claves `categoryNames.*` en los dos idiomas.
 11. **CA-11** · axe sin infracciones en Categorías, sus diálogos, el selector abierto y el modo selección de Movimientos (claro y oscuro); sin scroll horizontal a 375 px.
-12. **CA-12** · Los e2e de todas las specs anteriores pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
+12. **CA-12** · Los tests anteriores (e2e y Vitest) pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
 - **Nombres reales de BBVA**: la lista se basa en las categorías vistas y en las habituales de BBVA. Si el banco usa otros textos, esas filas llegan sin categoría y el usuario las enlaza una vez en «Categorías del banco» (punto 5).
 - **Tests anteriores con la lista vacía**: SPEC-0010 y SPEC-0015 se implementan antes, sin categorías. Con la siembra, sus e2e verán categorías y sugerencias. Ninguno de sus CA comprueba que la lista esté vacía, pero si alguno falla, se para y se vuelve a Refinar (`test_changes: none`).
-- **Selector sustituido**: los e2e anteriores que usen el selector de categoría por su etiqueta siguen funcionando. Si alguno usa `selectOption`, aplica el riesgo anterior.
+- **Tamaño para una sesión del plan Pro**: siembra, pantalla, equivalencias y selección múltiple. Si no cabe, se implementa en dos PR de la misma spec: puntos 1–3 y 5, y después 4 y 6.
 
 ### Preguntas abiertas
 - Ninguna para el propietario.
