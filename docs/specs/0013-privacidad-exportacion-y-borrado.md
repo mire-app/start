@@ -132,4 +132,4 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
 - **Exportación en claro**: el `.zip` no va cifrado; el diálogo lo advierte.
 
 ### Preguntas abiertas
-- Ninguna para el propietario.
+- Ninguna. El propietario confirmó el 2026-10-24 que el borrado remoto efectivo es eliminar él mismo `mire-datos`, guiado por Míre, en lugar de dar al token permisos de administración.
