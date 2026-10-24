@@ -1,7 +1,7 @@
 ---
 id: SPEC-0002
 title: Stack tecnológico y checks del proyecto
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Esqueleto de la app (TypeScript, React, Vite, SQLite WASM, PWA, i18n) según ADR-0002, .arda/checks.sh y despliegue en GitHub Pages
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, ADR-0001, ADR-0002]
