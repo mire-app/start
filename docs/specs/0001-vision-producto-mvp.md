@@ -107,12 +107,13 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0015 | Movimientos: lista, filtros, edición, traspasos y aportación externa | CA-02, CA-03, CA-20 (pantallas) |
 | SPEC-0007 | Categorías: lista inicial, gestión y recategorización | CA-08 (categorías) |
 | SPEC-0018 | Reglas «el concepto contiene X → categoría Y» | CA-08 (reglas) |
-| SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
+| SPEC-0008 + ADR-0006 | Motor de sincronización: captura por campo, fusión, cifrado y transporte (sin pantallas) | CA-12, CA-13 (lógica) |
+| SPEC-0020 | Conexión con GitHub, vinculación de dispositivos y estado de la sincronización | CA-11, CA-13 (de extremo a extremo), CA-14 (comprobación del propietario), CA-16 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
 | SPEC-0010 | Asistente de importación para BBVA y MyInvestor (pantallas) | CA-04, CA-05, CA-07, CA-20, CA-21 (comprobación de saldo, de extremo a extremo), CA-11 (importar sin conexión), CA-16 |
 | SPEC-0019 | Historial de importaciones y deshacer (pantallas) | CA-21 (deshacer, de extremo a extremo), CA-16 |
 | SPEC-0017 | Mapeo de columnas y plantillas para otros bancos (pantallas) | CA-06 (de extremo a extremo), CA-16 |
-| SPEC-0002 … SPEC-0019 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
+| SPEC-0002 … SPEC-0020 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance
 - Conexión bancaria de cualquier tipo (PSD2, agregadores). **Descartado del producto.**
@@ -143,7 +144,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 15. **CA-15** · La interfaz se puede cambiar entre español e inglés; importes y fechas se muestran en formato es-ES por defecto.
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
-18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0019 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
+18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0020 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
 19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa Míre durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
 20. **CA-20** · Un movimiento marcado como aportación externa suma al patrimonio y no aparece como ingreso.
 21. **CA-21** · Tras importar, si el fichero trae saldo (MyInvestor) o el usuario indica el saldo real (BBVA), Míre muestra la diferencia con el saldo calculado cuando no coinciden; una importación completa se puede deshacer.
@@ -164,7 +165,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 - **Alcance vs. plan Claude Pro**: siete funciones más la sincronización cifrada es mucho trabajo; por eso se trocea en las specs de la tabla «Trazabilidad».
 
 ### Preguntas abiertas (para specs posteriores)
-- Autenticación con GitHub desde web y móvil: SPEC-0002. Estrategia de conflictos (último cambio gana o preguntar): SPEC-0008.
+- Autenticación con GitHub desde web y móvil: SPEC-0002. Estrategia de conflictos: por campo, gana el último (SPEC-0008, ADR-0006; decisión del propietario del 2026-10-24).
 - Alojamiento gratuito de la web: SPEC-0002.
 - Resuelto en SPEC-0006: en una cuenta de inversión se admite cualquier movimiento importado, que suma a su valor hasta la siguiente valoración.
 - Contenido de la lista inicial de categorías: SPEC-0007.
@@ -172,4 +173,4 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
   - custodia de la clave y desbloqueo en SPEC-0005;
   - recuperación, ajustes y repositorio `mire-datos` en SPEC-0014;
   - exportación, borrado local y aviso de privacidad en SPEC-0013;
-  - borrado remoto efectivo: eliminar el repositorio `mire-datos` (guía en SPEC-0014), con aviso a otros dispositivos en SPEC-0008.
+  - borrado remoto efectivo: eliminar el repositorio `mire-datos` (guía en SPEC-0014), con aviso a otros dispositivos en SPEC-0020.

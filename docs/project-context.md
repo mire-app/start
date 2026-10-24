@@ -44,5 +44,6 @@
 15. SPEC-0017 — Column mapping and templates for other banks.
 16. SPEC-0007 — Categories: initial list, management, bulk recategorization.
 17. SPEC-0018 — Rules ("description contains X → category Y").
-18. SPEC-0008 — Local-first encrypted sync.
-19. SPEC-0009 — Dashboard.
+18. SPEC-0008 — Sync engine: per-field LWW with HLC, encrypted files via Git API (with ADR-0006). No UI.
+19. SPEC-0020 — GitHub connection wizard, device pairing by QR, sync status and notices.
+20. SPEC-0009 — Dashboard.

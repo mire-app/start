@@ -68,7 +68,7 @@ Es la primera de tres specs de datos e importación:
 ### 3. Convenciones
 | Dato | Formato |
 |---|---|
-| Columnas comunes | **Todas las tablas** salvo `schema_migrations` tienen `id TEXT PRIMARY KEY` (UUIDv7), `created_at`, `updated_at` y `deleted_at` (ISO-8601 UTC, `TEXT`; `deleted_at` admite NULL). |
+| Columnas comunes | **Todas las tablas** salvo `schema_migrations` y las `sync_*` tienen `id TEXT PRIMARY KEY` (UUIDv7), `created_at`, `updated_at` y `deleted_at` (ISO-8601 UTC, `TEXT`; `deleted_at` admite NULL). |
 | Fechas de negocio | `TEXT` `YYYY-MM-DD` |
 | Dinero | `*_cents INTEGER`, en EUR |
 | Participaciones | `units TEXT`, decimal con punto |
@@ -93,6 +93,11 @@ Además de las columnas comunes:
 | `import_batch` | `source, file_name, file_sha256, row_count, imported_count, duplicate_count, reverted_at` | — |
 | `import_template` | `name, format, settings, last_used_at` | `CHECK(format IN ('csv','xlsx'))`: `format` es informativo (el formato del fichero con el que se creó), no restringe su uso; `settings` es un JSON (lo define SPEC-0011); `last_used_at` admite NULL (hasta el primer uso) |
 | `balance_check` | `account_id, date, expected_cents, computed_cents, source, import_batch_id` | `CHECK(source IN ('file','user'))` |
+| `sync_state` | `key TEXT PRIMARY KEY, value TEXT` | Tablas **locales** de sincronización (las usa SPEC-0008): **excepción** a las columnas comunes; no se sincronizan ni se exportan |
+| `sync_clock` | `table_name, row_id, field, hlc` (todas `TEXT NOT NULL`) | `PRIMARY KEY(table_name, row_id, field)` |
+| `sync_outbox` | `seq INTEGER PRIMARY KEY AUTOINCREMENT, table_name, row_id, field, value, hlc` | `value` es JSON |
+| `sync_applied` | `path TEXT PRIMARY KEY, sha TEXT` | — |
+| `sync_notice` | `seq INTEGER PRIMARY KEY AUTOINCREMENT, kind, payload, created_at, seen_at` | `payload` es JSON; `seen_at` admite NULL |
 
 - **No se guarda la fila original** del fichero importado, ni cabeceras como titular o número de cuenta: solo los campos de la tabla. Así se reducen datos personales y el volumen que se sincroniza.
 - **Coherencia de traspasos**: un `transfer_group_id` agrupa **exactamente dos** movimientos en **cuentas distintas** con **importes opuestos**.

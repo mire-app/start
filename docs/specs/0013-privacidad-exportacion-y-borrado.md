@@ -32,14 +32,14 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
   - esta spec borra **todo lo del dispositivo** y destruye **aquí** la clave;
   - la copia remota no se vuelve ilegible con eso: el anillo subido sigue envuelto con la contraseña y el código, y borrar ficheros no borra el historial de git;
   - el borrado remoto efectivo es **eliminar el repositorio `mire-datos`** (guía en SPEC-0014);
-  - SPEC-0008 añadirá avisar a los demás dispositivos.
+  - con la sincronización conectada, el diálogo enlaza a la eliminación del repositorio, y los demás dispositivos ven el aviso «No encuentro tu repositorio de datos» (SPEC-0020).
 
 ## Cambio (delta)
 ### 1. Exportación (`src/privacy/export.ts`, menú → **«Exportar mis datos…» / «Export my data…»**)
 - **Acceso**: pide la **contraseña maestra o el código de recuperación**, aunque la app esté desbloqueada. El código solo se **verifica**; **no se consume** (solo se invalida al completar una recuperación, SPEC-0014).
 - **Fichero**: genera en el navegador, con `fflate` (MIT, versión exacta), `mire-export-AAAAMMDD.zip`, y lo descarga.
 - **`mire.json`**: `{ format: 'mire-export', version: 1, schemaVersion, exportedAt, tables: { <tabla>: [filas vivas] } }`.
-  - Las tablas se **enumeran dinámicamente** desde `sqlite_master` (`type='table'`), excluyendo `schema_migrations` y las `sqlite_%`.
+  - Las tablas se **enumeran dinámicamente** desde `sqlite_master` (`type='table'`), excluyendo `schema_migrations`, las `sqlite_%` y las tablas locales de sincronización `sync_%` (SPEC-0008).
   - Solo se incluyen filas con `deleted_at IS NULL`.
   - Importes en céntimos y fechas ISO.
 - **CSV legibles en Excel**: `cuentas.csv`, `movimientos.csv`, `valoraciones.csv` y `categorias.csv`.
@@ -95,7 +95,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
   - el menú de `TopBar`.
 
 ## Fuera de alcance
-- Borrado remoto y aviso a otros dispositivos: SPEC-0008. Guía para eliminar el repositorio: SPEC-0014.
+- Aviso a otros dispositivos y enlace a la eliminación del repositorio: SPEC-0020. Guía para eliminar el repositorio: SPEC-0014.
 - Restaurar desde la copia exportada: futuro (el formato ya está versionado).
 - Política para terceros usuarios: cuando el hogar sea multiusuario.
 

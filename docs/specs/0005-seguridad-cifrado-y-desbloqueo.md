@@ -111,7 +111,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
 - Siempre se empieza bloqueada al abrir o recargar.
 - La base local (SPEC-0004) se abre sin esperar al desbloqueo. Si otra pestaña la usa, el aviso de SPEC-0002 se ve también sobre la pantalla de PIN.
 
-### 5. Token de GitHub (API; las pantallas son de SPEC-0008)
+### 5. Token de GitHub (API; las pantallas son de SPEC-0020)
 - `setGithubToken(token, expiresAt)`:
   - exige estar desbloqueada;
   - exige el prefijo `github_pat_`; si no, `token_not_fine_grained`;
@@ -142,7 +142,7 @@ Fuera de SPEC-0005, el control no hace nada, de modo que no bloquea las specs fu
 ## Fuera de alcance
 - Recuperación con el código, diálogo «Seguridad…», CSP, antienmarcado y guía del repositorio de datos: SPEC-0014.
 - Exportación, borrado y aviso de privacidad: SPEC-0013.
-- Conexión con GitHub, subida y descarga del anillo, **alta de un segundo dispositivo** («Ya uso Míre en otro dispositivo») y sincronización: SPEC-0008.
+- Sincronización y subida y descarga del anillo: SPEC-0008. Conexión con GitHub y **alta de un segundo dispositivo** («Ya uso Míre en otro dispositivo»): SPEC-0020.
 - Cifrado de la base local: descartado (ADR-0005).
 
 ## Criterios de aceptación
@@ -203,7 +203,7 @@ Fuera de SPEC-0005, el control no hace nada, de modo que no bloquea las specs fu
 ### Riesgos
 - **Riesgos aceptados** (ADR-0005): base local en claro; PIN de 4 dígitos atacable fuera del navegador por quien copie el perfil.
 - **Sincronización y bloqueo**: con Míre bloqueada no hay DEK, así que no se puede cifrar ni descifrar el token. La sincronización se pausa mientras está bloqueada, y `onBeforeLock` permite vaciar la cola antes de bloquear. Lo concretará SPEC-0008.
-- **Segundo dispositivo**: la configuración de esta spec crea una DEK **nueva**. Un segundo dispositivo debe importar el anillo del repositorio, no crear otro. SPEC-0008 añadirá esa opción a la bienvenida; mientras tanto, cada dispositivo sería independiente.
+- **Segundo dispositivo**: la configuración de esta spec crea una DEK **nueva**. Un segundo dispositivo debe importar el anillo del repositorio, no crear otro. SPEC-0020 añadirá esa opción a la bienvenida; mientras tanto, cada dispositivo sería independiente.
 - **Tiempo de los e2e**: cada contexto nuevo hace una configuración, con Argon2id a 64 MiB (≈1 s en el escritorio). No se puede reutilizar una sesión, porque la clave de dispositivo no se serializa en `storageState`. Se mide (CA-14); si se pasa del presupuesto, se reducen flujos e2e, no los parámetros.
 - **Escáner de secretos**: las constantes de prueba deben evitar el patrón de `arda_ci.py` (CA-13).
 

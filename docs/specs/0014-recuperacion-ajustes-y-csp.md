@@ -38,7 +38,7 @@ Completar la seguridad de SPEC-0005 con:
 - **Cambiar PIN**: pide el PIN actual y el nuevo dos veces. El PIN actual se verifica con `unlockWithPin`, de modo que **cuenta como intento** y aplica el límite de 5 fallos.
 - **Cambiar contraseña maestra**: pide la actual y la nueva dos veces; reenvuelve la DEK.
 - **Regenerar código de recuperación**: pide la contraseña, muestra el código nuevo y exige confirmación; el anterior deja de valer al confirmar.
-- **Token de GitHub**: estado con `tokenStatus()` (configurado sí o no, y fecha de caducidad). La configuración del token es de SPEC-0008.
+- **Token de GitHub**: estado con `tokenStatus()` (configurado sí o no, y fecha de caducidad). La configuración del token es de SPEC-0020.
 
 ### 3. CSP y endurecimiento (solo en la build de producción)
 - Un **plugin de Vite** usa `transformIndexHtml` con `order: 'post'` en **todas** las entradas HTML (así el *precache* de vite-plugin-pwa ve el HTML final) e inserta, como **primer hijo de `<head>`**:
@@ -63,11 +63,11 @@ Completar la seguridad de SPEC-0005 con:
      - permisos *Contents: Read and write* (*Metadata: Read*, obligatorio);
      - caducidad de 1 año;
   3. comprobar en *Settings → Applications* que la GitHub App de Claude **no** está instalada en la cuenta personal o no incluye `mire-datos`;
-  4. **nunca** pegar el token en el chat de Claude, en issues ni en ficheros; solo en la pantalla de Míre (SPEC-0008).
+  4. **nunca** pegar el token en el chat de Claude, en issues ni en ficheros; solo en la pantalla de Míre (SPEC-0020).
 - **Borrado remoto efectivo**: eliminar el repositorio `mire-datos` en GitHub (*Settings → Danger zone*). Borrar ficheros no elimina el historial de git, y el token de Míre no tiene permiso para eliminar repositorios.
 
 ## Fuera de alcance
-- Conexión con GitHub, subida del anillo y segundo dispositivo: SPEC-0008.
+- Subida del anillo: SPEC-0008. Conexión con GitHub y segundo dispositivo: SPEC-0020, que lleva estos pasos al asistente dentro de la app.
 - Passkeys y biometría.
 - Cabeceras HTTP reales (`frame-ancestors`, HSTS): GitHub Pages no lo permite.
 
