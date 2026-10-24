@@ -50,12 +50,13 @@ Cambios documentales que acompañan a esta spec:
 - **Solo EUR**.
 
 ### Funciones del MVP (fase 1)
-1. **Cuentas**: alta, edición y archivado de cuentas de tipo **corriente, ahorro, efectivo e inversión**, con saldo inicial y fecha.
+1. **Cuentas** de tipo **corriente, ahorro, efectivo e inversión**, con saldo inicial y fecha.
+   - **Se crean al importar** (decisión del 2026-10-24: solo importación). Se pueden editar, agrupar y archivar, y borrar solo si están vacías.
    - Corriente, ahorro y efectivo: saldo = saldo inicial + movimientos.
    - Inversión: valor = última valoración registrada (función 6) + aportaciones − retiradas posteriores a esa valoración.
    - Una cuenta archivada se oculta de las listas, pero su histórico sigue contando en la evolución del patrimonio.
    - Las cuentas se pueden agrupar (p. ej. «Cartera MyInvestor» con un fondo por cuenta) para ver el valor de cada una y el del grupo completo.
-2. **Movimientos**: alta, edición y borrado manual de ingresos y gastos (fecha, importe, concepto, cuenta, categoría, nota opcional).
+2. **Movimientos**: **entran solo por importación** (sin alta manual). Se pueden **editar** (concepto, nota y categoría libremente; importe, fecha y cuenta con aviso) y **borrar**.
 3. **Traspasos entre cuentas**: un traspaso enlaza la salida de una cuenta con la entrada en otra, de cualquier tipo; **no cuenta como ingreso ni gasto**. Un traspaso hacia o desde una cuenta de inversión es una aportación o retirada: suma o resta a su valor hasta la siguiente valoración, que lo ajusta a la realidad. Al importar, un movimiento se puede marcar como traspaso y emparejar con su contrapartida (si existe) para no duplicarlo.
    - **Aportación externa**: una entrada de dinero desde una cuenta que no está en Míre (p. ej. el banco anterior) se puede marcar como aportación externa: suma al patrimonio pero **no cuenta como ingreso**.
 4. **Importación CSV, Excel (`.xlsx`) y PDF**:
@@ -68,7 +69,7 @@ Cambios documentales que acompañan a esta spec:
 5. **Categorías y reglas**:
    - Categorías de **dos niveles** (categoría › subcategoría), con una **lista inicial predefinida** que el usuario puede editar.
    - Reglas automáticas por texto del concepto (p. ej. «MERCADONA» → Alimentación › Supermercado) que se aplican al importar y pueden aplicarse a movimientos existentes.
-6. **Inversiones (solo valor)**: el valor de cada cuenta de inversión se actualiza a mano o importando la cartera de MyInvestor; se guarda el histórico de valoraciones. Sin operaciones de compra/venta.
+6. **Inversiones (solo valor)**: el valor de cada cuenta de inversión se actualiza importando la cartera de MyInvestor (sin valoración manual); se guarda el histórico de valoraciones. Sin operaciones de compra/venta.
 7. **Panel**:
    - **Patrimonio** total (cuentas + efectivo + inversiones), desglose por cuenta y tipo, y evolución mensual.
    - **Resumen mensual** de ingresos y gastos por categoría (sin traspasos).
@@ -100,12 +101,13 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0005 + ADR-0005 | Seguridad: cifrado, claves, desbloqueo, autobloqueo y token | CA-12 (primitivas de cifrado) |
 | SPEC-0014 | Seguridad: recuperación, ajustes, CSP y repositorio de datos | CA-14 |
 | SPEC-0013 | Privacidad: exportación, borrado y aviso | CA-22 |
-| SPEC-0006 | Cuentas, movimientos, traspasos e inversiones | CA-01, CA-02, CA-03 |
+| SPEC-0006 | Navegación, Inicio, cuentas, grupos, inversiones y ajustes | CA-01, CA-09 (patrimonio y desglose), CA-16 |
+| SPEC-0015 | Movimientos: lista, filtros, edición, traspasos y aportación externa | CA-02, CA-03, CA-20 (pantallas) |
 | SPEC-0007 | Categorías y reglas | CA-08 |
 | SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
 | SPEC-0010 | Asistente de importación (pantallas) | CA-04, CA-05, CA-06, CA-07, CA-20, CA-21 (de extremo a extremo) |
-| SPEC-0002 … SPEC-0014 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
+| SPEC-0002 … SPEC-0015 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance
 - Conexión bancaria de cualquier tipo (PSD2, agregadores). **Descartado del producto.**
@@ -119,8 +121,8 @@ Cambios documentales que acompañan a esta spec:
 
 ## Criterios de aceptación
 Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec responsable (tabla «Trazabilidad»); CA-19 lo valida el propietario.
-1. **CA-01** · Se pueden crear, editar y archivar cuentas de tipo corriente, ahorro, efectivo e inversión. En corriente, ahorro y efectivo, saldo = saldo inicial + movimientos; en inversión, valor = última valoración + aportaciones − retiradas posteriores.
-2. **CA-02** · Se pueden crear, editar y borrar movimientos manuales con fecha, importe, concepto, cuenta y categoría.
+1. **CA-01** · Las cuentas de tipo corriente, ahorro, efectivo e inversión se crean al importar, y se pueden editar, agrupar, archivar y borrar si están vacías. En corriente, ahorro y efectivo, saldo = saldo inicial + movimientos; en inversión, valor = última valoración + aportaciones − retiradas posteriores.
+2. **CA-02** · Los movimientos importados se pueden editar (concepto, nota y categoría; importe, fecha y cuenta con aviso) y borrar. No hay alta manual.
 3. **CA-03** · Un traspaso entre dos cuentas de cualquier tipo (incluida una de inversión) mantiene el patrimonio total sin cambios y no se registra como ingreso ni gasto.
 4. **CA-04** · Un informe sintético con el formato de BBVA y dos productos se importa sin mapeo manual de columnas, y los movimientos de cada producto aparecen en la cuenta de Míre asociada.
 5. **CA-05** · Un fichero sintético de movimientos de MyInvestor se importa en su cuenta de efectivo, y un extracto PDF sintético con su tabla «Posiciones» actualiza la valoración de cada cuenta de inversión (un fondo por cuenta) y del grupo.
@@ -136,7 +138,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 15. **CA-15** · La interfaz se puede cambiar entre español e inglés; importes y fechas se muestran en formato es-ES por defecto.
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
-18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0014 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
+18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0015 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
 19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa Míre durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
 20. **CA-20** · Un movimiento marcado como aportación externa suma al patrimonio y no aparece como ingreso.
 21. **CA-21** · Tras importar, si el fichero trae saldo (MyInvestor) o el usuario indica el saldo real (BBVA), Míre muestra la diferencia con el saldo calculado cuando no coinciden; una importación completa se puede deshacer.
@@ -159,7 +161,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 ### Preguntas abiertas (para specs posteriores)
 - Autenticación con GitHub desde web y móvil: SPEC-0002. Estrategia de conflictos (último cambio gana o preguntar): SPEC-0008.
 - Alojamiento gratuito de la web: SPEC-0002.
-- ¿Se admiten ingresos o gastos directos en una cuenta de inversión, o solo traspasos y valoraciones?: SPEC-0006.
+- Resuelto en SPEC-0006: en una cuenta de inversión se admite cualquier movimiento importado, que suma a su valor hasta la siguiente valoración.
 - Contenido de la lista inicial de categorías: SPEC-0007.
 - Resuelto (2026-10-24):
   - custodia de la clave y desbloqueo en SPEC-0005;

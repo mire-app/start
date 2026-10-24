@@ -69,7 +69,7 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
 - **`commit`**, en una transacción:
   - si todas las posiciones son `skip` y no hay cuentas que crear, devuelve `nothing_to_import` **sin crear lote**;
   - si no:
-    1. crea el lote, las cuentas y el grupo propuestos y los `source_link`;
+    1. crea el lote, las cuentas y el grupo propuestos (con `created_by_batch_id` igual al lote) y los `source_link`;
     2. inserta una `valuation` (`date`, `value_cents`, `units`, `import_batch_id`) por cada posición no omitida.
 - **`revert`**, en una transacción:
   1. marca `deleted_at` en las valoraciones del lote;

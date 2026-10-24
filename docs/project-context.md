@@ -23,6 +23,7 @@
 - Stack (ADR-0002): TypeScript + React + Vite, SQLite WASM (`opfs-sahpool`), PWA on GitHub Pages, Node 22, pnpm.
 - No `.arda/checks.sh` yet: SPEC-0002 creates it.
 - Owner's decision: **refine all specs of the backlog before implementing any**.
+- Owner's decision: **import only** — accounts, transactions and valuations are created by importing; no manual entry (2026-10-24).
 - Working branch: `arda/claude`. Data repo (planned): private `mire-datos` in the owner's personal GitHub account; local DB not encrypted at rest (accepted risk, ADR-0005).
 
 ## Backlog (in order)
@@ -35,8 +36,9 @@
 7. SPEC-0005 — Security: encryption, keys, unlock (master password, recovery code, 4-digit PIN), auto-lock, encrypted token (with ADR-0005).
 8. SPEC-0014 — Security: recovery, security settings, CSP/anti-framing, data repo setup guide.
 9. SPEC-0013 — Privacy: export, erase, privacy notice, zero telemetry.
-10. SPEC-0006 — Accounts, transactions, transfers and investments.
-11. SPEC-0007 — Categories and rules.
-12. SPEC-0008 — Local-first encrypted sync.
-13. SPEC-0009 — Dashboard.
-14. SPEC-0010 — Import wizard (UI for SPEC-0004 engines).
+10. SPEC-0006 — Navigation, Home summary, accounts, groups, investments, Settings with Diagnostics and demo data.
+11. SPEC-0015 — Transactions: list, filters, detail, edit, transfers, external contribution.
+12. SPEC-0010 — Import wizard (UI for SPEC-0011/0012 engines).
+13. SPEC-0007 — Categories and rules.
+14. SPEC-0008 — Local-first encrypted sync.
+15. SPEC-0009 — Dashboard.

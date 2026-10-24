@@ -146,7 +146,7 @@ Para cada fila, ya con su cuenta asignada o la cuenta nueva con un **id provisio
 
 **Efectos**:
 1. Crea el `import_batch` con los recuentos.
-2. Crea las cuentas nuevas con su id provisional, y hace `upsertSourceLink(source, sourceKey, accountId)` para **todas** las asignaciones, nuevas o existentes.
+2. Crea las cuentas nuevas con su id provisional y `created_by_batch_id` igual al lote (SPEC-0004), y hace `upsertSourceLink(source, sourceKey, accountId)` para **todas** las asignaciones, nuevas o existentes.
 3. Aplica la apertura aceptada.
 4. Inserta los movimientos incluidos con su `fingerprint`, `import_batch_id` y `source_category`.
 5. Llama a `linkTransfer` (SPEC-0004) para cada traspaso aceptado, también si la contrapartida ya estaba guardada.
