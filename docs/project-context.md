@@ -39,7 +39,8 @@
 10. SPEC-0016 — Router, Settings (moved controls), Diagnostics, demo data, test migration.
 11. SPEC-0006 — Navigation bars, Home summary, accounts, groups, investments.
 12. SPEC-0015 — Transactions: list, filters, detail, edit, transfers, external contribution.
-13. SPEC-0010 — Import wizard (UI for SPEC-0011/0012 engines).
-14. SPEC-0007 — Categories and rules.
-15. SPEC-0008 — Local-first encrypted sync.
-16. SPEC-0009 — Dashboard.
+13. SPEC-0010 — Import wizard for BBVA/MyInvestor (UI for SPEC-0011/0012), history and undo.
+14. SPEC-0017 — Column mapping and templates for other banks.
+15. SPEC-0007 — Categories and rules.
+16. SPEC-0008 — Local-first encrypted sync.
+17. SPEC-0009 — Dashboard.

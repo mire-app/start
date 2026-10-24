@@ -108,8 +108,9 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0007 | Categorías y reglas | CA-08 |
 | SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
-| SPEC-0010 | Asistente de importación (pantallas) | CA-04, CA-05, CA-06, CA-07, CA-20, CA-21 (de extremo a extremo) |
-| SPEC-0002 … SPEC-0016 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
+| SPEC-0010 | Asistente de importación para BBVA y MyInvestor (pantallas) | CA-04, CA-05, CA-07, CA-20, CA-21 (de extremo a extremo) |
+| SPEC-0017 | Mapeo de columnas y plantillas para otros bancos (pantallas) | CA-06 (de extremo a extremo) |
+| SPEC-0002 … SPEC-0017 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance
 - Conexión bancaria de cualquier tipo (PSD2, agregadores). **Descartado del producto.**
@@ -140,7 +141,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 15. **CA-15** · La interfaz se puede cambiar entre español e inglés; importes y fechas se muestran en formato es-ES por defecto.
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
-18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0016 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
+18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0017 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
 19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa Míre durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
 20. **CA-20** · Un movimiento marcado como aportación externa suma al patrimonio y no aparece como ingreso.
 21. **CA-21** · Tras importar, si el fichero trae saldo (MyInvestor) o el usuario indica el saldo real (BBVA), Míre muestra la diferencia con el saldo calculado cuando no coinciden; una importación completa se puede deshacer.
