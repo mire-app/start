@@ -50,7 +50,9 @@ Las librerías se cargan bajo demanda (ADR-0004). Todo se ejecuta **dentro del w
 1. **`read(bytes, fileName, template?)`** detecta el formato, lee el fichero y produce un **`ParsedFile`**:
    - `source` y `file_sha256`;
    - filas normalizadas `{ row, sourceKey, date, valueDate?, amountCents, description, note?, sourceCategory?, balanceCents? }`;
-   - errores por fila `{ row, code }`.
+   - errores por fila `{ row, code }`;
+   - avisos de fichero, como `balance_chain_mismatch`;
+   - **`accounts`**: una entrada por `sourceKey` distinta, `{ sourceKey, linkedAccountId?, proposal: { name, type, institution } }`. Se calcula consultando `source_link` en la base del worker. Si hay enlace, el asistente asigna por defecto la cuenta enlazada; si no, propone `proposal`.
 2. **`resolve(parsed, assignments)`** produce el **`ImportPlan`**. `assignments` dice, para cada `sourceKey`, `{ accountId }` o `{ create: { name, type, institution } }`.
 3. **`commit(plan, decisions)`** guarda el lote.
 4. **`revert(batchId)`** lo deshace.
@@ -93,22 +95,27 @@ Las librerías se cargan bajo demanda (ADR-0004). Todo se ejecuta **dentro del w
   | `sourceKey` | `default` |
 
 - **Cuenta nueva propuesta**: «MyInvestor efectivo», tipo `savings` e institución `MyInvestor`.
-- **Orden cronológico**:
-  - si la fecha de la primera fila es posterior a la de la última, el fichero está en orden descendente y se invierte entero;
-  - si todas las fechas son iguales, se elige el sentido en el que se cumple la cadena `saldo[i] = saldo[i−1] + importe[i]`;
-  - después, el orden es estable.
+- El orden cronológico sigue la regla común del punto 6.
 
 ### 5. Genérico CSV y `.xlsx` (`source = 'generic_csv' | 'generic_xlsx'`)
 - **CSV**: se decodifica UTF-8 estricto y, si falla, `windows-1252`. El separador (`;`, `,`, tabulador) se detecta solo o lo fija la plantilla.
 - **Plantilla** (`import_template.settings`, JSON):
-  - `format` y `headerRow` (índice de la fila de cabeceras, desde 0);
+  - el **formato lo determina el fichero**, no la plantilla;
+  - `format` es **informativo**: el formato del fichero con el que se creó, que también se guarda en `import_template.format`. Una plantilla vale para CSV y para `.xlsx`; `delimiter` se ignora en `.xlsx` y `sheet` se ignora en CSV;
+  - `headerRow` (índice de la fila de cabeceras, desde 0);
   - `columns`, cuyas claves son `date`, `description`, `amount` **o** `debit` + `credit`, y opcionalmente `valueDate`, `balance` y `category`; cada valor es el **texto de la cabecera** comparado con `normalizeText`;
   - `dateFormat`, `decimal` y `sourceKey` (texto libre, por defecto `default`);
   - `sheet` (solo `.xlsx`) y `delimiter` (solo CSV).
 - **Debe y Haber**: `debit` con valor da importe **negativo** y `credit` da **positivo**. Si ambos tienen valor, o ninguno, la fila da el error `empty_required`.
+- **Saldo**: la columna `balance` es opcional por fila. Una celda vacía da `balanceCents` indefinido, y esa fila no se usa para la comprobación de saldo.
 - **`saveTemplate(name, settings)`** crea un `import_template`. Si la plantilla se pasa a `read`, se aplica a otro fichero con la misma estructura.
 
 ### 6. Plan (`resolve`)
+**Orden cronológico (todos los formatos)**: antes de calcular el plan, las filas de cada `sourceKey` se ordenan así:
+- si la fecha de la primera fila es posterior a la de la última, el fichero está en orden descendente y se invierte entero;
+- si todas las fechas son iguales y hay saldo, se elige el sentido en el que se cumple la cadena `saldo[i] = saldo[i−1] + importe[i]`. Si no se cumple en ninguno de los dos sentidos, se mantiene el orden del fichero y se añade el aviso `balance_chain_mismatch`;
+- después, el orden es estable.
+
 Para cada fila, ya con su cuenta asignada o la cuenta nueva con un **id provisional** UUIDv7 generado en `resolve`, el plan calcula:
 
 - **Huella**: `sha256(accountId | date | amountCents | normalizeText(description) | ordinal)`. `ordinal` es el número de aparición de esa combinación en el fichero, empezando en 0.
@@ -128,6 +135,10 @@ Para cada fila, ya con su cuenta asignada o la cuenta nueva con un **id provisio
 - **Apertura** (solo si las filas traen saldo y la cuenta no tiene movimientos vivos): se sugiere `opening = saldo(primera fila cronológica) − importe(primera fila)`, con `opening_date` igual a esa fecha.
 
 ### 7. Confirmación (`commit`) en una única transacción
+**Validación previa**: antes de escribir nada, `commit` valida las decisiones. Una fila con `kind='external'` e importe negativo da `external_requires_positive`, sin escribir nada.
+
+**Comprobación de duplicados en la confirmación**: dentro de la transacción, `commit` vuelve a comprobar cada huella. Las filas cuya huella ya existe en ese momento (la base cambió desde `resolve`) no se insertan y se devuelven como `duplicate_at_commit`.
+
 **Decisiones**:
 - por fila: `include`, `categoryId?` y `kind` (`regular` | `external`);
 - por sugerencia de traspaso: aceptada sí o no;
@@ -146,9 +157,10 @@ El resultado devuelve el `batchId` y `diff = computed − expected` por cuenta.
 **Comprobación de saldo de BBVA**: no hay saldo en el fichero, así que SPEC-0010 llama a `recordBalanceCheck` (SPEC-0004) con el saldo que indique el usuario.
 
 ### 8. Deshacer (`revert`) en una transacción
-1. Marca `deleted_at` en los movimientos del lote.
-2. Llama a `unlinkTransfer` en todo grupo de traspaso que incluya un movimiento del lote; la contrapartida **de fuera del lote** (de otro lote o manual) vuelve a `regular`.
-3. Marca `reverted_at` en el lote.
+Si el lote ya tiene `reverted_at`, da `already_reverted`. Si no:
+1. llama a `unlinkTransfer` en todo grupo de traspaso que incluya un movimiento del lote; la contrapartida **de fuera del lote** (de otro lote o manual) vuelve a `regular`;
+2. marca `deleted_at` en los movimientos del lote;
+3. marca `reverted_at` en el lote.
 
 Las cuentas, la apertura, los `source_link` y los `balance_check` se mantienen.
 
@@ -197,6 +209,8 @@ Se generan con ExcelJS en `src/import/__fixtures__/` y se versionan. Todos los d
 
 **`corrupto.xlsx`**: bytes `PK` truncados.
 
+Los repositorios de lotes (`createBatch`, `insertImportedMovements`, `revertBatch`, `saveTemplate`) los añade esta spec en `src/db/repo/import.ts`, respetando el CA-10 de SPEC-0004 (SQL solo en `src/db/`).
+
 ## Fuera de alcance
 - Pantallas del asistente: SPEC-0010. PDF de cartera: SPEC-0012.
 - Motor de reglas, lista de categorías y edición de `category_map`: SPEC-0007.
@@ -216,8 +230,9 @@ Todos son tests de Vitest en Node con SQLite en memoria (SPEC-0004) y los ficher
    - la apertura sugerida es **10000** el `2026-09-12`;
    - ningún campo del plan contiene `TITULAR EJEMPLO` ni `ES00`.
 3. **CA-03** · Cuentas:
-   - con `assignments` `{ create }` para `BBVA·DIARIO` y `BBVA·AHORRO`, el `commit` crea dos cuentas «Diario» y «Ahorro» (`checking`, `BBVA`) y sus dos `source_link`;
-   - un segundo `read` del mismo fichero propone esas cuentas ya enlazadas, sin `create`.
+   - el primer `read` de `bbva-informe.xlsx` devuelve en `accounts` dos entradas sin `linkedAccountId`, con propuestas «Diario» y «Ahorro» (`checking`, `BBVA`);
+   - con `assignments` `{ create }` para ambas, el `commit` crea las dos cuentas y sus dos `source_link`;
+   - un segundo `read` devuelve en `accounts` el `linkedAccountId` de cada una.
 4. **CA-04** · Duplicados:
    - la primera importación de `bbva-informe.xlsx` incluye las filas 5 y 6 (dos cafés);
    - reimportar el mismo fichero marca las **9** filas como `duplicate`, con `include=false` y el aviso `same_file`;
@@ -230,19 +245,21 @@ Todos son tests de Vitest en Node con SQLite en memoria (SPEC-0004) y los ficher
 7. **CA-07** · Aportación externa: con la decisión `kind='external'` en la fila 1, el movimiento queda `external` y `countsAsIncomeOrExpense` es falso.
 8. **CA-08** · Saldo:
    - con la apertura sugerida aceptada, el `commit` de MyInvestor da `diff = 0`;
-   - con la apertura editada a 9.900, da `diff = −100`;
+   - con la apertura editada a 9900 céntimos, da `diff = −100`;
    - en ambos casos guarda un `balance_check` con `source='file'` y `expected = 52049`.
 9. **CA-09** · Deshacer:
    - con BBVA y MyInvestor confirmados y el traspaso de 500,00 € aceptado, `revert` del lote BBVA devuelve el movimiento de MyInvestor a `regular` sin grupo;
    - `accountBalance` de «Diario» vuelve a 0 y el lote queda con `reverted_at`;
    - reimportar `bbva-informe.xlsx` después ya no marca ninguna fila como `duplicate` ni da el aviso `same_file`.
 10. **CA-10** · Genérico:
-    - `generico-latin1.csv`, con la plantilla `{ headerRow: 0, columns: { date: 'Fecha', description: 'Concepto', debit: 'Debe', credit: 'Haber', balance: 'Saldo' }, dateFormat: 'dd/mm/aaaa', decimal: ',' }`, produce `COMPRA ÑANDÚ TIENDA` con −4.590 y `DEVOLUCIÓN` con +1.000;
-    - guardada con `saveTemplate` y aplicada a `generico.xlsx`, da las mismas filas.
+    - `generico-latin1.csv`, con la plantilla `{ format: 'csv', headerRow: 0, columns: { date: 'Fecha', description: 'Concepto', debit: 'Debe', credit: 'Haber', balance: 'Saldo' }, dateFormat: 'dd/mm/aaaa', decimal: ',', delimiter: ';' }`, produce `COMPRA ÑANDÚ TIENDA` con −4590 céntimos y `DEVOLUCIÓN` con +1000, ambas sin `balanceCents`;
+    - guardada con `saveTemplate` y aplicada a `generico.xlsx`, da las mismas filas (el `delimiter` se ignora).
 11. **CA-11** · Errores:
     - `antiguo.xls` da `xls_not_supported`, también renombrado a `.xlsx`;
     - `corrupto.xlsx` da `unreadable_file`;
-    - una fila con fecha `31/02/2026` da el error de fila `invalid_date` sin abortar las demás, y el error no contiene el texto de la celda.
+    - el test construye **en memoria con ExcelJS** un informe con el formato BBVA y dos filas, una de ellas con fecha `31/02/2026`. Esa fila da el error `invalid_date` sin abortar la otra, y el error no contiene el texto de la celda;
+    - `revert` de un lote ya revertido da `already_reverted`;
+    - `commit` con `kind='external'` en una fila negativa da `external_requires_positive` y no escribe nada.
 12. **CA-12** · `pnpm build:fixtures` regenera ficheros cuyo **contenido leído** (celdas y filas) coincide con los versionados; un test compara lo leído, no los bytes.
 13. **CA-13** · `.arda/checks.sh` completo sigue por debajo de 5 minutos.
 
@@ -250,6 +267,7 @@ Todos son tests de Vitest en Node con SQLite en memoria (SPEC-0004) y los ficher
 ### Riesgos
 - **Ficheros reales distintos de las capturas**: tipos de celda o formato de negativos en MyInvestor. Mitigación: lectores tolerantes, y `import:check` (SPEC-0012) en el ordenador del propietario antes de usarlo de verdad.
 - **Concepto cambiante entre descargas**: si el banco cambia el texto, la huella no detecta el duplicado. SPEC-0010 mostrará un aviso suave cuando coincidan cuenta, fecha e importe con concepto distinto.
+- **ExcelJS y pdf.js dentro del worker** de la base de datos: no está verificado en navegador (los tests son en Node); lo cubrirá el e2e de SPEC-0010. Plan B: leer el fichero en un worker propio o en el hilo principal y pasar al worker de la base solo el `ParsedFile`.
 - **Tamaño**: tres lectores, plan, *commit*, *revert* y ficheros sintéticos. Si no cabe en una sesión de Claude Pro, el genérico puede pasar a otra spec; requeriría volver a Refinar.
 
 ### Preguntas abiertas

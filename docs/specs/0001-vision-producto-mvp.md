@@ -19,7 +19,7 @@ Fijar **qué es Míre y qué hace su primera versión utilizable (MVP)**, para q
 ## Contexto
 - `docs/project-context.md`: producto, marca, restricciones (Claude Pro, RGPD, sin PSD2) y backlog.
 - `ADR-0001` (`docs/decisions/0001-almacenamiento-local-first-github-cifrado.md`): estrategia de almacenamiento y sincronización (accepted el 2026-10-24).
-- Renombrado NÖM → Míre (2026-10-24): esta spec volvió a draft solo para cambiar el nombre; el alcance no cambia. Identidad completa en SPEC-0003 y `docs/brand.md`.
+- Renombrado NÖM → Míre (2026-10-24): la spec volvió a draft para cambiar el nombre, sin cambio de alcance. Identidad completa en SPEC-0003 y `docs/brand.md`.
 - Ampliación de la importación (2026-10-24), tras ver los extractos reales anonimizados:
   - informe BBVA `.xlsx` con varias cuentas;
   - cartera de MyInvestor en PDF;
@@ -150,7 +150,7 @@ Criterios del MVP. CA-01 a CA-18, CA-20 y CA-21 se verifican en la spec responsa
 - **Crecimiento del repositorio y ruido de commits** con sincronización cada 5 min. Mitigación: subir solo con cambios, agrupar y compactar.
 - **Uso de GitHub como almacén de datos**: depende de las condiciones del plan gratuito y de los límites de la API; se verifica en SPEC-0002.
 - **Formatos de banco cambiantes**: BBVA o MyInvestor pueden cambiar sus extractos. Mitigación: el mapeo manual (CA-06) sirve de respaldo.
-- **Datos reales en desarrollo**: prohibido. Los formatos de BBVA y MyInvestor se construyen con extractos de muestra anonimizados o sintéticos (SPEC-0004).
+- **Datos reales en desarrollo**: prohibido. Los formatos de BBVA y MyInvestor se construyen con extractos de muestra anonimizados o sintéticos (SPEC-0011 y SPEC-0012).
 - **Alcance vs. plan Claude Pro**: siete funciones más la sincronización cifrada es mucho trabajo; por eso se trocea en las specs de la tabla «Trazabilidad».
 
 ### Preguntas abiertas (para specs posteriores)

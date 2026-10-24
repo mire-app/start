@@ -26,7 +26,7 @@ Es la primera de tres specs de datos e importación:
   - borrado lógico;
   - escritura centralizada en el worker.
 - `ADR-0002`: SQLite WASM con `opfs-sahpool` en un worker.
-- `ADR-0004` (proposed): UUIDv7, céntimos enteros y librerías. **Se acepta junto con esta spec.**
+- `ADR-0004` (proposed): UUIDv7, céntimos enteros y librerías. **Se acepta junto con esta spec, SPEC-0011 y SPEC-0012.**
 - `SPEC-0002` (approved): deja el worker, un cliente con *abrir* y *ejecutar consulta*, y la prueba de almacenamiento `/mire-smoke.sqlite3`.
   - Su texto dice que «SPEC-0004 lo eliminará». **Esta spec la mantiene**: retirarla rompería el contrato de e2e de SPEC-0002, y su retirada se hará en SPEC-0006 con `test_changes: allowed`.
   - SPEC-0002 queda desactualizada en esa frase; no se puede editar porque está aprobada.
@@ -52,7 +52,11 @@ Es la primera de tres specs de datos e importación:
   - abre `/mire-smoke.sqlite3` (SPEC-0002) y **`/mire.sqlite3`**;
   - aplica las migraciones pendientes **antes** de atender ninguna `call`;
   - si una migración falla, todas las `call` responden `{ code: 'migration_failed' }`.
-- **ESLint**: `no-restricted-imports` impide importar `src/db/worker*` y `src/db/sql*` fuera de `src/db/`. Fuera de ahí solo se usa `client.ts`.
+- **Relación con el cliente de SPEC-0002**:
+  - la operación *abrir* de SPEC-0002, con su reintento de ~1 s y el aviso «Míre ya está abierto en otra pestaña», **se conserva**;
+  - ahora abre las dos bases, y si cualquiera de ellas está bloqueada por otra pestaña, se muestra el mismo aviso;
+  - SPEC-0002 CA-08 debe seguir pasando sin cambios.
+- **ESLint**: `no-restricted-imports` (con `allowTypeImports: true`) impide importar **valores** de `src/db/worker*` y `src/db/sql*` fuera de `src/db/`. Fuera de ahí solo se usa `client.ts` y, como tipo, `SqlDb` (`import type`), para el código que el worker ejecuta, como `src/import/`.
 
 ### 2. Migraciones
 - Ficheros `src/db/migrations/NNNN_nombre.sql`, cargados con `import.meta.glob` (en Node, con lectura de ficheros).
@@ -81,34 +85,46 @@ Además de las columnas comunes:
 | `account_group` | `name` | — |
 | `account` | `name, type, institution, group_id, isin, opening_date, opening_balance_cents, archived_at` | `CHECK(type IN ('checking','savings','cash','investment'))`, `CHECK(isin IS NULL OR type='investment')`, FK `group_id`, `opening_balance_cents` por defecto 0 |
 | `source_link` | `source, key, account_id` | `UNIQUE(source, key)` parcial, FK `account_id` |
-| `category` | `parent_id, system_key, name, archived_at` | FK `parent_id`; trigger `BEFORE INSERT/UPDATE`: si `parent_id` apunta a una categoría que ya tiene padre, `RAISE(ABORT,'category_depth')` |
+| `category` | `parent_id, system_key, name, archived_at` | FK `parent_id`; triggers `BEFORE INSERT/UPDATE` que lanzan `RAISE(ABORT,'category_depth')` si `parent_id` apunta a una categoría que ya tiene padre, **o** si se da padre a una categoría que ya tiene hijos vivos |
 | `category_map` | `source, source_category, category_id` | `UNIQUE(source, source_category)` parcial, FK |
 | `movement` | `account_id, date, value_date, amount_cents, description, note, kind, category_id, transfer_group_id, import_batch_id, fingerprint, source_category` | `CHECK(amount_cents <> 0)`, `CHECK(kind IN ('regular','transfer','external'))`, `CHECK(kind <> 'external' OR amount_cents > 0)`, `CHECK((kind = 'transfer') = (transfer_group_id IS NOT NULL))`, FKs; índices `(account_id, date)` y `fingerprint` |
-| `valuation` | `account_id, date, value_cents, units, import_batch_id` | Trigger: la cuenta debe ser `investment` (`RAISE(ABORT,'valuation_account_type')`); `UNIQUE(account_id, date)` parcial |
+| `valuation` | `account_id, date, value_cents, units, import_batch_id, deleted_by_batch_id` | Trigger: la cuenta debe ser `investment` (`RAISE(ABORT,'valuation_account_type')`); `UNIQUE(account_id, date)` parcial |
 | `import_batch` | `source, file_name, file_sha256, row_count, imported_count, duplicate_count, reverted_at` | — |
 | `import_template` | `name, format, settings` | `CHECK(format IN ('csv','xlsx'))`; `settings` es un JSON (lo define SPEC-0011) |
 | `balance_check` | `account_id, date, expected_cents, computed_cents, source, import_batch_id` | `CHECK(source IN ('file','user'))` |
 
 - **No se guarda la fila original** del fichero importado, ni cabeceras como titular o número de cuenta: solo los campos de la tabla. Así se reducen datos personales y el volumen que se sincroniza.
-- **Coherencia de traspasos**: un `transfer_group_id` agrupa **exactamente dos** movimientos en **cuentas distintas** con **importes opuestos**. La impone la función de repositorio `linkTransfer(db, movementIdA, movementIdB)`, que es la única que asigna `transfer_group_id` y lanza `transfer_invalid` si no se cumple. `unlinkTransfer(db, groupId)` devuelve ambos a `regular`.
+- **Coherencia de traspasos**: un `transfer_group_id` agrupa **exactamente dos** movimientos en **cuentas distintas** con **importes opuestos**.
+  - La impone la función de repositorio `linkTransfer(db, movementIdA, movementIdB)`, que es la única que asigna `transfer_group_id`.
+  - Lanza `transfer_invalid` si no se cumple, o si alguno de los dos es `external` o ya está en un traspaso.
+  - `unlinkTransfer(db, groupId)` devuelve ambos a `regular`.
+- **`valuation.deleted_by_batch_id`**: cuando una importación reemplaza una valoración (SPEC-0012), se guarda qué lote la borró, para que deshacer ese lote pueda restaurarla.
 
 ### 5. Repositorios mínimos de esta spec
 - **Cuentas y grupos**: `createAccount`, `updateAccount`, `archiveAccount`, `createGroup` y `setAccountGroup`.
 - **Movimientos**: `createMovement`, `updateMovement` y `deleteMovement` (lógico); `linkTransfer` y `unlinkTransfer`; `setKind` (`regular` | `external`).
 - **Valoraciones**: `createValuation` y `deleteValuation` (lógico).
 - **Enlaces y equivalencias**: `upsertSourceLink` y `upsertCategoryMap`.
-- **Saldos**: `recordBalanceCheck(db, accountId, date, expectedCents)`, que guarda `computed_cents = accountBalance(...)` y devuelve `diff = computed − expected`.
+- **Saldos**: `recordBalanceCheck(db, { accountId, date, expectedCents, source = 'user', importBatchId? })`, que guarda `computed_cents = accountBalance(...)` y devuelve `diff = computed − expected`. SPEC-0011 lo usa con `source='file'`.
 - Los lotes, el *commit* y el *revert* de importación son de SPEC-0011.
 
 ### 6. Dominio (`src/domain/`)
-- **`balanceAt(opening, movements, date)`**, para corriente, ahorro y efectivo:
-  - antes de `opening_date` vale **0**;
-  - desde `opening_date` (incluida) vale `opening_balance_cents` más la suma de `amount_cents` de los movimientos no borrados con `date ≤` la fecha pedida, **todos los `kind`**.
-- **`investmentValueAt(opening, valuations, movements, date)`**:
+**Tipos** (`src/domain/types.ts`):
+- `AccountData = { id, type, groupId: string | null, openingDate: string | null, openingBalanceCents: number }`;
+- `MovementData = { accountId, date, amountCents, kind }`;
+- `ValuationData = { accountId, date, valueCents }`.
+
+Las funciones reciben solo datos vivos (no borrados).
+
+- **`balanceAt(account, movements, date)`**, para corriente, ahorro y efectivo:
+  - **si `openingDate` es NULL**, la cuenta cuenta «desde siempre»: el saldo es `openingBalanceCents` (0 por defecto) más la suma de todos los movimientos con fecha ≤ `date`;
+  - si tiene fecha, antes de `openingDate` vale **0**, y desde `openingDate` (incluida) vale `openingBalanceCents` más la suma de `amountCents` con fecha ≤ `date`;
+  - se suman **todos los `kind`**.
+- **`investmentValueAt(account, valuations, movements, date)`**:
   - sea `V` la última valoración con `V.date ≤ date`;
   - si existe: `V.value_cents` + suma de movimientos con `V.date < m.date ≤ date` (**estrictamente posteriores**, todos los `kind`). Los movimientos del mismo día que la valoración se consideran incluidos en ella;
   - si no existe: igual que `balanceAt`.
-- **`netWorthAt(accounts, …, date)`**: suma de todas las cuentas no borradas, archivadas incluidas. **`groupValueAt(groupId, …)`**: suma de las cuentas del grupo.
+- **`netWorthAt(accounts, movements, valuations, date)`**: suma de todas las cuentas recibidas, archivadas incluidas, con `balanceAt` o `investmentValueAt` según su tipo. **`groupValueAt(groupId, accounts, movements, valuations, date)`**: la misma suma, solo para las cuentas del grupo.
 - **`countsAsIncomeOrExpense(movement)`**: verdadero solo si `kind = 'regular'`.
 - **Consultas** (`src/db/repo/queries.ts`): `accountBalance(db, accountId, date)`, `netWorth(db, date)` y `groupValue(db, groupId, date)` cargan los datos y llaman al dominio.
 
@@ -132,7 +148,8 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
 - **`normalizeText(s)`**: NFD sin diacríticos, mayúsculas, espacios colapsados y sin espacios en los extremos.
 
 ### 8. Diagnóstico en la pantalla de inicio
-- La pantalla de inicio (SPEC-0002/0003) muestra «Base de datos: versión N» (`data-testid="db-version"`, texto traducido), junto a la prueba de almacenamiento.
+- La pantalla de inicio (SPEC-0002/0003) muestra «Base de datos: versión N» (`data-testid="db-version"`, con el atributo `data-applied-at` igual al `applied_at` de esa versión), junto a la prueba de almacenamiento.
+- Usa los tokens y componentes de SPEC-0003, y sus textos tienen claves en `es.json` y `en.json`. Los e2e de axe de SPEC-0003 (claro y oscuro) deben seguir pasando.
 - Sirve para verificar en navegador que `/mire.sqlite3` abre y migra junto a la base de prueba.
 
 ## Fuera de alcance
@@ -152,6 +169,8 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
    | Caso | Error |
    |---|---|
    | Tercer nivel de categoría | `category_depth` |
+   | Dar padre a una categoría con hijos | `category_depth` |
+   | `linkTransfer` sobre un movimiento `external` | `transfer_invalid` |
    | `kind='external'` con importe negativo | `CHECK` |
    | `kind='transfer'` sin grupo, o `regular` con grupo | `CHECK` |
    | Valoración en cuenta `checking` | `valuation_account_type` |
@@ -194,6 +213,8 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
    | `2026-09-05` | 15000 |
    | `2026-09-30` | 13000 |
 
+   La misma cuenta **con `openingDate` NULL** y apertura 0 da 3000 a `2026-09-30` y 5000 a `2026-09-05`.
+
 6. **CA-06** · Valor de inversión, con apertura 0, valoración de 1.000,00 € el D = `2026-09-01`, aportación +200,00 € el D+1, retirada −50,00 € el D+2 y otra valoración de 1.180,00 € el D+3:
 
    | Fecha | `investmentValueAt` |
@@ -214,15 +235,16 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
 8. **CA-08** · `recordBalanceCheck` sobre la cuenta de CA-05 a `2026-09-30`:
    - con un esperado de 13.000 céntimos devuelve `diff = 0`;
    - con 12.900, devuelve `diff = +100`;
-   - guarda el `balance_check` con `source='user'`.
+   - guarda el `balance_check` con `source='user'`;
+   - con `source='file'` e `importBatchId`, guarda ambos valores.
 9. **CA-09** · `groupValue` de un grupo con dos cuentas de inversión, valoradas en 1.000,00 € y 500,00 €, es 150000. Una cuenta archivada del grupo sigue sumando.
 10. **CA-10** · Escritura centralizada:
-    - ESLint falla con un fichero de prueba fuera de `src/db/` que importa `src/db/sql`;
+    - un test que usa la API de ESLint (`ESLint#lintText`) da error de `no-restricted-imports` para un código situado en `src/ui/x.ts` que hace `import { x } from '@/db/sql'`, y ningún error para `import type { SqlDb } from '@/db/sql'`;
     - `git grep -nE "\b(INSERT|UPDATE|DELETE)\b" -- src ':!src/db' ':!**/*.test.*'` no devuelve nada.
 11. **CA-11** · e2e en navegador (contexto nuevo), en un fichero nuevo `e2e/data/db.spec.ts`:
     - la pantalla de inicio muestra `db-version` = 1;
     - la prueba de almacenamiento de SPEC-0002 sigue funcionando;
-    - tras recargar, `db-version` sigue en 1, lo que demuestra que conviven las dos bases en `opfs-sahpool`.
+    - tras recargar, `db-version` sigue en 1 y su `data-applied-at` es **el mismo** que antes de recargar, lo que demuestra que `/mire.sqlite3` persiste y no se ha vuelto a migrar, conviviendo con la base de prueba en `opfs-sahpool`.
 12. **CA-12** · Los e2e de SPEC-0002 y SPEC-0003 pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
 
 ## Riesgos y preguntas abiertas
