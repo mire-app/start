@@ -69,8 +69,8 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
   - **campos del banco**: importe, fecha y cuenta. El aviso aparece **la primera vez que se modifica uno de ellos** en el diálogo: «Este dato viene del extracto. Si lo cambias, ya no coincidirá con tu banco».
   - **Huella**: `fingerprint` **nunca cambia al editar**, sea cual sea el campo. Así, al reimportar el mismo extracto, la fila original se sigue detectando como duplicada y no se duplica.
   - Cambiar a negativo el importe de una **aportación externa** da `external_requires_positive`, con el mensaje «Quita antes la marca de aportación externa».
-    - Si el movimiento es un traspaso, cambiar el importe o la cuenta lo **desvincula** antes, con un aviso.
-    - El importe no puede ser 0.
+  - Si el movimiento es un traspaso, cambiar el importe o la cuenta lo **desvincula** antes, con un aviso.
+  - El importe no puede ser 0.
 - **Aportación externa**: interruptor visible solo en movimientos de **entrada** que no son traspaso. Llama a `setKind('external' | 'regular')`.
 - **Traspaso**:
   - **«Vincular como traspaso»** abre una lista de **candidatos**: movimientos vivos de **otra cuenta**, con importe **opuesto e igual**, `|Δfecha| ≤ 3 días`, que no son traspaso ni aportación externa. Se ordenan por menor `Δfecha`. Al elegir uno se llama a `linkTransfer`.
@@ -92,7 +92,7 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
 - Exportar la lista filtrada: la exportación completa es de SPEC-0013.
 
 ## Criterios de aceptación
-Los e2e parten de la seguridad configurada y de los datos de ejemplo de SPEC-0006.
+Los e2e parten de la seguridad configurada y de los datos de ejemplo de SPEC-0016.
 
 1. **CA-01** · Lista:
    - `#/movimientos` muestra los **6** movimientos de ejemplo agrupados por día (el más reciente, 16/09/2026);
@@ -131,7 +131,7 @@ Los e2e parten de la seguridad configurada y de los datos de ejemplo de SPEC-000
    - (Vitest, componente con Testing Library y jsdom) con 100 de 250 cargados, la lista muestra «Cargar más», y al pulsarlo pide `offset 100`.
    - No hay e2e de paginación, porque sin alta manual no se pueden crear más de 100 movimientos desde la interfaz.
 9. **CA-09** · axe (SPEC-0003) sin infracciones en la lista, los filtros desplegados, el detalle, el diálogo de edición y el de candidatos, en claro y en oscuro; sin scroll horizontal a 375 px.
-10. **CA-10** · Los e2e de SPEC-0002 a SPEC-0006 pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
+10. **CA-10** · Los e2e de todas las specs anteriores (SPEC-0002 a SPEC-0006, SPEC-0013, SPEC-0014 y SPEC-0016) pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
 
 ## Riesgos y preguntas abiertas
 ### Riesgos

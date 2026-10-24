@@ -123,7 +123,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
 **Justificación**: con la configuración obligatoria, un contexto de navegador nuevo muestra la bienvenida y no la pantalla de inicio. Los e2e de SPEC-0002, SPEC-0003 y SPEC-0004 deben configurar y desbloquear antes de sus comprobaciones.
 
 **Alcance permitido, y solo este**:
-- nuevo `e2e/helpers/security.ts` con `completeSetup(page)` y `unlock(page)`, bilingües, que usan las constantes `TEST_MASTER_PW` y `TEST_PIN` (sintéticas);
+- nuevo `e2e/helpers/security.ts` con `completeSetup(page)` y `unlock(page)`. Terminan cuando es visible el botón **«Menú» / «Menu»** de `TopBar`, nunca un control de la pantalla de inicio, que otras specs pueden mover. Son bilingües, que usan las constantes `TEST_MASTER_PW` y `TEST_PIN` (sintéticas);
 - en los ficheros de test **preexistentes**, solo **líneas añadidas** que importen esos ayudantes o los llamen (`await completeSetup(page)` y `await unlock(page)`), tras `page.goto` y tras cada recarga;
 - `playwright.config.ts` puede subir `timeout` hasta 60 s por test.
 
@@ -133,7 +133,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
 - añadir `.skip` u `.only`;
 - cambiar *timeouts* dentro de los tests.
 
-**Control** `tools/check-test-changes.ts`, ejecutado con `tsx` (ADR-0004; si aún no está en `package.json`, esta spec lo añade como `devDependency` exacta) por `.arda/checks.sh` **solo mientras `.arda/active-spec` apunta a esta spec**. Su lógica se separa en `checkDiff(diff, baseTestFiles)`, una función pura con tests en `tools/*.test.ts` (el `include` de Vitest se amplía a `tools/**/*.test.ts`):
+**Control** `tools/check-test-changes.ts`, ejecutado con `tsx` (ADR-0004; si aún no está en `package.json`, esta spec lo añade como `devDependency` exacta) por `.arda/checks.sh` **solo mientras `.arda/active-spec` apunta a esta spec**. La política es ampliable por spec: SPEC-0016 añade la suya. Su lógica se separa en `checkDiff(diff, baseTestFiles)`, una función pura con tests en `tools/*.test.ts` (el `include` de Vitest se amplía a `tools/**/*.test.ts`):
 - **base**: `git merge-base HEAD origin/main`, haciendo antes `git fetch origin main` si falta. Si no se puede resolver, **falla** con un mensaje claro (en `arda-gate`, `fetch-depth: 0` lo garantiza);
 - **qué comprueba**: los ficheros que en la base cumplen el patrón de tests de `arda_guard.py` deben seguir existiendo y su diff solo puede tener líneas añadidas de la lista permitida.
 

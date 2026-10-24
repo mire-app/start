@@ -234,7 +234,8 @@ Todos son tests de Vitest en Node con SQLite en memoria (SPEC-0004) y los ficher
 3. **CA-03** · Cuentas:
    - el primer `read` de `bbva-informe.xlsx` devuelve en `accounts` dos entradas sin `linkedAccountId`, con propuestas «Diario» y «Ahorro» (`checking`, `BBVA`);
    - con `assignments` `{ create }` para ambas, el `commit` crea las dos cuentas, con `created_by_batch_id` igual al lote, y sus dos `source_link`;
-   - un segundo `read` devuelve en `accounts` el `linkedAccountId` de cada una.
+   - un segundo `read` devuelve en `accounts` el `linkedAccountId` de cada una;
+   - si después se marca `deleted_at` en la cuenta «Ahorro» (vía repositorio), un nuevo `read` devuelve «Ahorro» **sin** `linkedAccountId`, con su propuesta.
 4. **CA-04** · Duplicados:
    - la primera importación de `bbva-informe.xlsx` incluye las filas 5 y 6 (dos cafés);
    - reimportar el mismo fichero marca las **9** filas como `duplicate`, con `include=false` y el aviso `same_file`;

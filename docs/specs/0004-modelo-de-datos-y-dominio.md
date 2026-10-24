@@ -28,7 +28,7 @@ Es la primera de tres specs de datos e importación:
 - `ADR-0002`: SQLite WASM con `opfs-sahpool` en un worker.
 - `ADR-0004` (proposed): UUIDv7, céntimos enteros y librerías. **Se acepta junto con esta spec, SPEC-0011 y SPEC-0012.**
 - `SPEC-0002` (approved): deja el worker, un cliente con *abrir* y *ejecutar consulta*, y la prueba de almacenamiento `/mire-smoke.sqlite3`.
-  - Su texto dice que «SPEC-0004 lo eliminará». **Esta spec la mantiene**: retirarla rompería el contrato de e2e de SPEC-0002, y SPEC-0006 la traslada a Ajustes › Diagnóstico con `test_changes: allowed`.
+  - Su texto dice que «SPEC-0004 lo eliminará». **Esta spec la mantiene**: retirarla rompería el contrato de e2e de SPEC-0002, y SPEC-0016 la traslada a Ajustes › Diagnóstico con `test_changes: allowed`.
   - SPEC-0002 queda desactualizada en esa frase; no se puede editar porque está aprobada.
 - **Comprobado el 2026-10-24**: la build Node de `@sqlite.org/sqlite-wasm` 3.54.1 funciona con `oo1.DB(':memory:')`, claves ajenas, triggers y `db.transaction()`.
 
@@ -157,7 +157,7 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
 - Pantallas de cuentas, movimientos e importación: SPEC-0006 y SPEC-0010.
 - Contenido inicial y edición de categorías y de `category_map`: SPEC-0007.
 - Registro de operaciones y sincronización: SPEC-0008. Cifrado: SPEC-0005.
-- Trasladar la prueba de almacenamiento y `db-version` a Ajustes › Diagnóstico: SPEC-0006.
+- Trasladar la prueba de almacenamiento y `db-version` a Ajustes › Diagnóstico: SPEC-0016.
 
 ## Criterios de aceptación
 1. **CA-01** · Migraciones (Node, en memoria).
@@ -254,7 +254,7 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
 ### Riesgos
 - **Capacidad del pool OPFS**: si 10 entradas no bastan para el *journal*, el arranque falla; lo detecta CA-11. Mitigación: subir `initialCapacity`.
 - **Rendimiento del dominio en memoria**: cargar todos los movimientos de una cuenta para calcular saldos es suficiente para un uso personal (miles de filas). Si crece, SPEC-0009 puede pasar a agregados en SQL.
-- **Contradicción con SPEC-0002** sobre la base de prueba: está explicada en Contexto. SPEC-0006 la traslada a Diagnóstico.
+- **Contradicción con SPEC-0002** sobre la base de prueba: está explicada en Contexto. SPEC-0016 la traslada a Diagnóstico.
 
 ### Preguntas abiertas
 - Ninguna para el propietario.

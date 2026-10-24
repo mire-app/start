@@ -48,7 +48,7 @@ Dar a Míre su navegación y sus dos primeras pantallas de uso:
   | Importar / Import | `upload_file` |
 
   - Respeta `env(safe-area-inset-bottom)` y cada objetivo mide ≥ 44 × 44 px.
-  - Aparece en todas las rutas salvo `#/ajustes`, a la que se llega desde el menú de `TopBar`.
+  - Aparece en todas las rutas salvo `#/ajustes`, a la que se llega desde el menú de `TopBar`; desde Ajustes se vuelve con el logotipo o con «atrás» (SPEC-0016).
 - **Escritorio** (≥ 768 px): las 4 secciones como enlaces dentro de `TopBar`, sin barra inferior.
 - **Sección activa**: `aria-current="page"` y color `accent`.
 
@@ -100,7 +100,8 @@ Los e2e parten de la seguridad configurada (SPEC-0005) y, salvo indicación, de 
 1. **CA-01** · Móvil (375 × 812):
    - hay barra inferior con 4 pestañas con icono y texto, y ningún enlace de sección en `TopBar`;
    - Cuentas lleva a `#/cuentas` con `aria-current="page"`;
-   - los objetivos miden ≥ 44 × 44 px.
+   - los objetivos miden ≥ 44 × 44 px;
+   - en `#/ajustes` no hay barra inferior.
 2. **CA-02** · Escritorio (1280 × 800): no hay barra inferior y las 4 secciones están en `TopBar`.
 3. **CA-03** · Transiciones (espía de SPEC-0003):
    - de Inicio a Cuentas, `vt-forward`;

@@ -52,15 +52,16 @@ Secciones, cada una con un encabezado `h2`:
 - **Diagnóstico**:
   - «Base de datos: versión N» (`data-testid="db-version"`, con `data-applied-at`), trasladado;
   - espacio usado: `navigator.storage.estimate().usage`, en MB con un decimal en formato es-ES (`12,3 MB`), o «No disponible» si el navegador no lo da;
-  - versión de la app: `package.json` → `import.meta.env.APP_VERSION`;
+  - versión de la app: la constante global `__APP_VERSION__`, inyectada desde `package.json` con `define` en `vite.config.ts` (declarada en un `.d.ts`);
   - la **prueba de almacenamiento**, trasladada con el mismo botón y el mismo `data-testid="smoke-count"`;
   - los **datos de ejemplo** (punto 3).
 - **Roles**: las acciones de Ajustes son `button`; las del menú son `menuitem`. No se confunden en los e2e.
+- **Volver desde Ajustes**: el logotipo de `TopBar` es un enlace a `#/` en todas las pantallas, y también funciona el botón «atrás» del navegador. Esto importa en el móvil, donde Ajustes no muestra la barra inferior (SPEC-0006).
 
 ### 3. Datos de ejemplo (`src/db/repo/demo.ts`)
 - **`seedDemo(db)`** crea, en una transacción:
-  - un `import_batch` con `source='demo'`;
-  - los datos de la tabla siguiente, con **fechas fijas** (las de la tabla), con `created_by_batch_id` igual a ese lote en las cuentas y el grupo, y los traspasos enlazados con `linkTransfer`.
+  - un `import_batch` con `source='demo'`, `file_name='demo'`, `file_sha256` NULL, `row_count = imported_count = 6` y `duplicate_count = 0`;
+  - los datos de la tabla siguiente, con **fechas fijas** (las de la tabla). Las cuentas y el grupo llevan `created_by_batch_id`, y los movimientos y valoraciones `import_batch_id`, todos igual a ese lote. Los traspasos se enlazan con `linkTransfer`.
   - Si ya hay alguna cuenta viva, lanza `demo_requires_empty`.
 - **`removeDemo(db)`**:
   - si alguna cuenta del ejemplo tiene movimientos o valoraciones vivos de **otros** lotes, lanza `demo_mixed` y no cambia nada;
@@ -113,6 +114,7 @@ Hay 6 movimientos y 2 traspasos (4 movimientos de traspaso).
 ## Criterios de aceptación
 1. **CA-01** · Router:
    - `#/ajustes` muestra Ajustes, y una ruta desconocida lleva a `#/`;
+   - desde Ajustes, pulsar el logotipo de `TopBar` lleva a `#/`;
    - tras recargar en `#/ajustes` y desbloquear, se sigue en `#/ajustes`;
    - con el espía de SPEC-0003, ir de `#/` a `#/ajustes` usa `vt-forward`, y el botón «atrás» del navegador usa `vt-back`.
 2. **CA-02** · Ajustes:
