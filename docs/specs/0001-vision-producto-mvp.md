@@ -109,9 +109,9 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0018 | Reglas «el concepto contiene X → categoría Y» | CA-08 (reglas) |
 | SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
-| SPEC-0010 | Asistente de importación para BBVA y MyInvestor (pantallas) | CA-04, CA-05, CA-07, CA-20, CA-21 (comprobación de saldo, de extremo a extremo) |
-| SPEC-0019 | Historial de importaciones y deshacer (pantallas) | CA-21 (deshacer, de extremo a extremo) |
-| SPEC-0017 | Mapeo de columnas y plantillas para otros bancos (pantallas) | CA-06 (de extremo a extremo) |
+| SPEC-0010 | Asistente de importación para BBVA y MyInvestor (pantallas) | CA-04, CA-05, CA-07, CA-20, CA-21 (comprobación de saldo, de extremo a extremo), CA-11 (importar sin conexión), CA-16 |
+| SPEC-0019 | Historial de importaciones y deshacer (pantallas) | CA-21 (deshacer, de extremo a extremo), CA-16 |
+| SPEC-0017 | Mapeo de columnas y plantillas para otros bancos (pantallas) | CA-06 (de extremo a extremo), CA-16 |
 | SPEC-0002 … SPEC-0019 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance

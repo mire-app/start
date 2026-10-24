@@ -4,7 +4,7 @@ title: Lector del PDF de cartera de MyInvestor y comprobación local de ficheros
 status: draft          # draft → approved (solo una persona) → implemented
 summary: Lectura de la tabla «Posiciones» del extracto PDF de MyInvestor con pdf.js (un fondo por cuenta, grupo «Cartera MyInvestor», valoraciones con duplicados), y herramienta import:check que valida ficheros reales en local sin mostrar datos
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
+refs: [SPEC-0001, SPEC-0004, SPEC-0010, SPEC-0011, SPEC-0019, ADR-0004]
 ---
 
 # SPEC-0012 · Lector del PDF de cartera de MyInvestor y comprobación local de ficheros
@@ -74,11 +74,13 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
   - si no:
     1. crea el lote, las cuentas y el grupo propuestos (con `created_by_batch_id` igual al lote; un grupo existente que se reutiliza conserva el suyo) y los `source_link`;
     2. inserta una `valuation` (`date`, `value_cents`, `units`, `import_batch_id`) por cada posición no omitida.
+  - **Recuentos del lote** (definición de SPEC-0011): `row_count` = posiciones leídas, `imported_count` = valoraciones insertadas (incluidas las que reemplazan) y `duplicate_count` = posiciones duplicadas omitidas.
+  - **Resultado** (tipo de SPEC-0011): una entrada de `accounts` por cuenta con valoración insertada, con `importedCount` 0, `valuationCount` 1 y sin `lastDate` ni `diffCents`.
 - **`revert`**, en una transacción:
   1. marca `deleted_at` en las valoraciones del lote;
   2. **restaura** (`deleted_at = NULL`, `deleted_by_batch_id = NULL`) las valoraciones que ese lote había reemplazado.
 
-  Los lotes se deshacen en orden inverso: si una valoración fue reemplazada por un lote posterior que sigue vivo, `revert` del lote anterior da `revert_blocked_by_later_batch`, con `{ blockingBatchId, blockingDate }` del lote posterior (hay que deshacer antes ese).
+  Los lotes se deshacen en orden inverso: si una valoración fue reemplazada por un lote posterior que sigue vivo, `revert` del lote anterior da `revert_blocked_by_later_batch`, con `{ blockingBatchId, blockingDate, blockingFileName }` del lote posterior (hay que deshacer antes ese). `blockingDate` es el `created_at` de ese lote (fecha y hora de la importación, no la fecha de la valoración).
 
   Así se cumple SPEC-0001 CA-21.
 
@@ -111,7 +113,8 @@ Variantes:
 ### 4. Comprobación local (`tools/import-check.ts`, `pnpm import:check <fichero> [--plantilla <fichero.json>]`)
 - `--plantilla` recibe un JSON con la forma de `import_template.settings` (SPEC-0011), para validar ficheros de bancos sin formato predefinido.
 - Ejecuta `read` (SPEC-0011 y esta spec) en Node, contra una base vacía en memoria, sobre el fichero indicado. **No escribe en ninguna base persistente.**
-- **Código de salida**: `0` si `read` termina, aunque haya errores de fila; `2` si hay un error de fichero (`xls_not_supported`, `unreadable_file`, `unknown_format`, `pdf_layout_unknown`), que se imprime como código.
+- **Código de salida**: `0` si `read` termina, aunque haya errores de fila; `2` si hay un error de fichero (`xls_not_supported`, `unreadable_file`, `unknown_format`, `pdf_layout_unknown`, `template_mismatch` o `template_invalid`), que se imprime como código.
+- Los errores de fila se imprimen con `sheetRow` (SPEC-0011).
 - **Imprime solo**:
   - el formato detectado (`source`) o el código de error de fichero;
   - el número de filas o posiciones;
@@ -147,7 +150,8 @@ Tests de Vitest en Node, salvo CA-07.
    - reimportar el mismo PDF marca las 4 valoraciones `duplicate` con la acción `skip` y el aviso `same_file`, y el `commit` devuelve `nothing_to_import` sin crear lote;
    - importar `myinvestor-extracto-v2.pdf` con `replace` en LU0000000001 da un `groupValue` de **598019**;
    - `revert` de ese lote lo devuelve a **593031**, con la valoración original restaurada;
-   - importando v2 y después v3, ambas con `replace` en LU0000000001, `revert` del lote v2 da `revert_blocked_by_later_batch` con el `blockingBatchId` del lote v3 y su fecha; tras revertir antes el v3, el de v2 sí se revierte.
+   - importando v2 y después v3, ambas con `replace` en LU0000000001, `revert` del lote v2 da `revert_blocked_by_later_batch` con el `blockingBatchId` del lote v3, su `created_at` como `blockingDate` y `blockingFileName = 'myinvestor-extracto-v3.pdf'`; tras revertir antes el v3, el de v2 sí se revierte;
+   - el lote v2 tiene `row_count` 4, `imported_count` 1 y `duplicate_count` 3, y su `commit` devuelve una sola entrada en `accounts`, con `valuationCount` 1.
 4. **CA-04** · Sin fecha:
    - `myinvestor-extracto-sin-fecha.pdf` produce `valuationDate = null`, y `resolve` sin `valuationDate` da `valuation_date_required`;
    - con `valuationDate = '2026-10-24'`, después de importar `myinvestor-extracto.pdf`, el plan marca las 4 posiciones como `duplicate`.
@@ -157,6 +161,7 @@ Tests de Vitest en Node, salvo CA-07.
 6. **CA-06** · `pnpm import:check` sobre cada fichero sintético de SPEC-0011 y de esta spec:
    - termina con **código 0** en los válidos e imprime el formato correcto. Esto incluye `myinvestor-extracto.pdf`, `-v2.pdf` y `-v3.pdf`, `myinvestor-extracto-sin-fecha.pdf`, que imprime «fecha de valoración: no», y `generico-latin1.csv` y `generico.xlsx` con `--plantilla` apuntando a la plantilla de SPEC-0011 CA-10 (guardada como `src/import/__fixtures__/plantilla-generico.json`);
    - termina con **código 2** e imprime el código de error en `antiguo.xls`, `corrupto.xlsx` y `sin-posiciones.pdf`, y también en `generico-latin1.csv` **sin** `--plantilla` (`unknown_format`);
+   - termina con **código 2** e imprime `template_mismatch` en `generico-latin1.csv` con una plantilla que el test escribe en un directorio temporal, con la columna `date` apuntando a `Fecha operación` (cabecera que no existe), e imprime `template_invalid` con otra plantilla cuyas columnas `debit` y `credit` apuntan ambas a `Debe`;
    - un test comprueba que su salida **no contiene** ningún concepto, importe, saldo, ISIN, alias (`DIARIO`, `AHORRO`), `TITULAR EJEMPLO` ni `ES00` de esos ficheros.
 7. **CA-07** · **El propietario** ejecuta `pnpm import:check` en su ordenador sobre sus tres ficheros reales (informe de BBVA, movimientos de MyInvestor y extracto PDF) y confirma que se detecta el formato correcto **sin errores de fila**. Es condición para marcar esta spec como `implemented`.
 8. **CA-08** · `.arda/checks.sh` completo sigue por debajo de 5 minutos.
