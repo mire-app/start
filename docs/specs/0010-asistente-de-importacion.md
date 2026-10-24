@@ -142,7 +142,7 @@ El historial y «Deshacer» van en SPEC-0019; el mapeo de columnas para otros ba
    - el paso 3 muestra 1 traspaso sugerido (filas 2 y 3, desactivado) y «Nuevos (9)»;
    - se activa el traspaso y se importa: el resultado dice 7 en «Diario» y 2 en «Ahorro»;
    - «Saldo en tu banco el 15/09/2026» de «Diario» con `1.023,44` → cuadra; con `1.000,00` → «Diferencia de +23,44 €»; con `abc` → «Importe no válido»;
-   - Inicio muestra un patrimonio de `1.338,44 €`.
+   - la región «Patrimonio» de Inicio (SPEC-0006) muestra `1.338,44 €`.
    - Cubre SPEC-0001 CA-04.
 2. **CA-02** · Reimportar BBVA: el paso 3 muestra «Ya importaste este fichero», 9 posibles duplicados sin marcar y **ninguna** tarjeta de traspaso, y «Importar» queda deshabilitado.
 3. **CA-03** · MyInvestor tras BBVA:

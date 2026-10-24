@@ -208,7 +208,7 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 **`UNIQUE`**, cuando una escritura choca con otra fila viva:
 1. **Se pospone** al final de su fase.
 2. Al terminar la fase, las filas pospuestas se aplican **a la vez**:
-   - primero se ponen sus columnas clave a un marcador temporal único (`'\u0000sync:' || id`);
+   - primero se pone **una** columna de la clave que no sea clave ajena (p. ej. `pattern_norm`) a un marcador temporal único e imprimible, `'sync:tmp:' || id`, pasado como parámetro;
    - después se escriben sus valores finales.
    Así se resuelven los intercambios de claves entre filas del mismo ciclo.
 3. **Si alguna sigue chocando** con el estado final de la tabla, gana la de menor `created_at` (en empate, menor `id`), y la perdedora recibe `deleted_at`.
@@ -388,6 +388,7 @@ Todos son tests de Vitest:
 - **Relojes desajustados**: un dispositivo con la hora adelantada (menos de 24 h) gana los conflictos del mismo campo. Es un riesgo aceptado (ADR-0006).
 - **Triggers `TEMP` con `opfs-sahpool`**: son SQL estándar, pero no se han probado en el navegador. `temp_store = MEMORY` evita que consuman entradas del pool. Los e2e de SPEC-0020 lo prueban de extremo a extremo.
 - **API de GitHub**: las cifras de los límites, el 409 de repositorio vacío y que *Contents* baste para la API Git con un token de grano fino no se han podido consultar desde este entorno. Se verifican al implementar, y la prueba real es SPEC-0020 CA-10.
+- **Repositorio perdido con varios dispositivos con datos**: solo el primero puede empezar el nuevo con `initRemote`. Los demás encuentran un repositorio `mire` y deben borrar sus datos y unirse (`local_not_empty`). Lo no subido de esos otros dispositivos se pierde. Es la limitación declarada en «Fuera de alcance».
 - **Token comprometido**: quien lo tenga no puede leer los datos (están cifrados), pero sí borrarlos o subir versiones antiguas, lo que afecta a la disponibilidad. Mitigación: los datos siguen en cada dispositivo; se revoca el token y se crea otro repositorio.
 - **Escritura al cerrar**: el navegador no garantiza el `push` en segundo plano. La garantía real son los 5 minutos, el desbloqueo siguiente y `onBeforeLock`.
 - **Tamaño para una sesión del plan Pro**: se implementa en dos PR de la misma spec si no cabe:

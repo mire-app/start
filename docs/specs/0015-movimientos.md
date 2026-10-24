@@ -4,7 +4,7 @@ title: Movimientos: lista, filtros, detalle, edición y traspasos
 status: draft          # draft → approved (solo una persona) → implemented
 summary: Lista global de movimientos con filtros (cuenta, mes, tipo, categoría, texto), detalle con edición avisada de datos importados, borrado, vincular y desvincular traspasos y marcar aportación externa
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0007, SPEC-0010, SPEC-0011, SPEC-0016, SPEC-0018, ADR-0002]
+refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0007, SPEC-0009, SPEC-0010, SPEC-0011, SPEC-0016, SPEC-0018, ADR-0002]
 ---
 
 # SPEC-0015 · Movimientos: lista, filtros, detalle, edición y traspasos
@@ -115,7 +115,8 @@ Los e2e parten de la seguridad configurada y de los datos de ejemplo de SPEC-001
    - con `cuenta = Cuenta Ejemplo` hay 4;
    - con `tipo = traspaso` hay **4** (−300, +300, −500 y +500);
    - con `q = gasolinera` hay 1;
-   - la URL refleja los filtros y, al recargar (desbloqueando), se mantienen;
+   - la URL refleja los filtros con los valores literales (p. ej. `cuenta=<id>&tipo=traspaso`) y, al recargar (desbloqueando), se mantienen;
+   - un valor desconocido (p. ej. `tipo=otro`) se ignora y deja ese filtro en su valor por defecto; `q` va codificado con `encodeURIComponent`;
    - «Ver todos» desde el detalle de «Ahorro Ejemplo» (SPEC-0006) llega con `cuenta` ya puesto.
 3. **CA-03** · Editar:
    - cambiar la nota de «GASOLINERA EJEMPLO» se guarda sin aviso;

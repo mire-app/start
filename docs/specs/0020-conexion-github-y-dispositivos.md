@@ -209,7 +209,7 @@ Antes de borrar se llama a `sync.stop()`.
    - en A (conectado, con `bbva-informe.xlsx` importado), «Vincular dispositivo» pide la contraseña y muestra el QR, el código, «Copiar enlace» y la cuenta atrás;
    - B, en un contexto nuevo, abre el enlace, y la URL ya no lleva `d=`;
    - con un código erróneo, B ve «El código o la contraseña no son correctos»;
-   - con el correcto, la contraseña y un PIN, Inicio de B muestra un patrimonio de `1.338,44 €`.
+   - con el correcto, la contraseña y un PIN, la región «Patrimonio» de Inicio de B (SPEC-0006) muestra `1.338,44 €`.
 3. **CA-03** · Cambios entre dispositivos (e2e, a continuación):
    - A cambia la nota de «GASOLINERA EJEMPLO»; tras «Sincronizar ahora» en A y en B, B la ve;
    - B cambia su categoría y A su concepto, sin sincronizar; tras sincronizar los dos, ambos ven los dos cambios.

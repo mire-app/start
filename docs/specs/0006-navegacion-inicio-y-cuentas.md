@@ -53,7 +53,8 @@ Dar a Míre su navegación y sus dos primeras pantallas de uso:
 - **Sección activa**: `aria-current="page"` y color `accent`.
 
 ### 2. Inicio (`#/`)
-- **Patrimonio**: `netWorth(hoy)` con `Amount kind="balance"` en grande, con el título «Patrimonio» / «Net worth».
+- **Patrimonio**: `netWorth(hoy)` con `Amount kind="balance"` en grande, dentro de una región (`<section aria-labelledby>`) con el título «Patrimonio» / «Net worth».
+- **Localizadores de los e2e** de Inicio: por rol, nombre y región, nunca por posición. El patrimonio se lee en `getByRole('region', { name: 'Patrimonio' })`, y los grupos y cuentas en sus filas, porque SPEC-0009 y SPEC-0020 añaden secciones.
 - **Secciones de otras specs**: SPEC-0020 (tarjeta de sincronización) y SPEC-0009 (panel) añaden secciones entre el patrimonio y los grupos.
 - **Grupos** que tengan alguna cuenta **no archivada**, ordenados por nombre. Cada uno muestra su total (`groupValue`, que **incluye las cuentas archivadas**, con la nota «incluye archivadas» si las hay) y sus cuentas no archivadas, ordenadas por nombre.
 - **Cuentas sin grupo y no archivadas**, por tipo (Corriente, Ahorro, Efectivo, Inversión) y por nombre dentro de cada tipo.
