@@ -21,9 +21,10 @@ ADR-0002 dejó la librería de componentes para este punto.
 |---|---|
 | Estilos | **Tailwind CSS**. Los tokens de SPEC-0003 se definen como variables CSS (`--color-*`) y se exponen como utilidades de Tailwind. El tema oscuro va con el atributo `data-theme` en `<html>`. |
 | Componentes | **shadcn/ui**: componentes accesibles sobre primitivas Radix, copiados al repositorio (`src/ui/`) y adaptados a los tokens. No es una dependencia de versión opaca. |
-| Iconos | **Material Symbols Rounded** (Apache-2.0), importados como **SVG individuales** desde un paquete npm. Se descarta la fuente de iconos: así se incluyen solo los iconos usados y funcionan sin conexión. |
-| Tipografía | **Sora** (OFL) **autoalojada** vía Fontsource (`@fontsource-variable/sora` o equivalente estático), incluida en el *precache* de la PWA. Sin peticiones a Google Fonts. |
-| Movimiento | **View Transitions API** para el cambio entre pantallas (deslizamiento direccional) y **Motion** para animaciones de componentes que lo necesiten (entrada y salida de diálogos y avisos). Si el navegador no soporta View Transitions, el cambio es instantáneo. |
+| Iconos | **Material Symbols Rounded** (Apache-2.0), del paquete `@material-symbols/svg-400`, importados como **SVG individuales** convertidos en componentes React con `vite-plugin-svgr`. Se descarta la fuente de iconos: así se incluyen solo los iconos usados y funcionan sin conexión. |
+| Tipografía | **Sora** (OFL) **autoalojada** con `@fontsource/sora`: ficheros estáticos de subconjunto latino, pesos 400–700, incluidos en el *precache* de la PWA. Sin peticiones a Google Fonts. |
+| Movimiento | **View Transitions API** para el cambio entre pantallas (deslizamiento direccional) y **Motion** (`motion`) para la entrada y salida de diálogos, menús y avisos. Si el navegador no soporta View Transitions, el cambio es instantáneo. |
+| Logotipo | Generado con un script de build propio (`opentype.js`) a partir de la fuente Sora: SVG solo con trazados. |
 | Utilidades | `class-variance-authority`, `clsx` y `tailwind-merge`, el trío estándar de shadcn/ui. |
 | Verificación | `@axe-core/playwright` para auditar la accesibilidad en los e2e. |
 | Versiones | Exactas, como en ADR-0002. Se elige la versión mayor estable vigente al implementar, compatible con React y Vite de ADR-0002. |

@@ -18,7 +18,8 @@ Fijar **qué es Míre y qué hace su primera versión utilizable (MVP)**, para q
 
 ## Contexto
 - `docs/project-context.md`: producto, marca, restricciones (Claude Pro, RGPD, sin PSD2) y backlog.
-- `ADR-0001` (`docs/decisions/0001-almacenamiento-local-first-github-cifrado.md`): estrategia de almacenamiento y sincronización. Debe aceptarse junto con esta spec.
+- `ADR-0001` (`docs/decisions/0001-almacenamiento-local-first-github-cifrado.md`): estrategia de almacenamiento y sincronización (accepted el 2026-10-24).
+- Renombrado NÖM → Míre (2026-10-24): esta spec volvió a draft solo para cambiar el nombre; el alcance no cambia. Identidad completa en SPEC-0003 y `docs/brand.md`.
 - Proyecto greenfield: no hay código ni specs previas. Stack sin decidir (lo decidirá SPEC-0002 con ADR-0002).
 - Requisitos recogidos con el propietario en la sesión de Analizar y Refinar del 2026-10-24.
 

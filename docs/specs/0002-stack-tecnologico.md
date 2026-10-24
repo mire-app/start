@@ -20,9 +20,10 @@ Decidir el stack de Míre (ADR-0002) y dejar un **esqueleto mínimo que funcione
 También crea `.arda/checks.sh`, que ejecutan el hook de parada y el CI.
 
 ## Contexto
-- `SPEC-0001` (approved): alcance del MVP. Esta spec cubre **CA-15** (idiomas y formato es-ES), **CA-17** (coste 0 €) y su parte de **CA-18**.
+- `SPEC-0001` (draft por el renombrado a Míre; alcance sin cambios): alcance del MVP. Esta spec cubre **CA-15** (idiomas y formato es-ES), **CA-17** (coste 0 €) y su parte de **CA-18**.
 - `ADR-0001` (accepted): local-first con sincronización cifrada en GitHub. Su verificación pendiente de los límites de GitHub se hace en ADR-0002, en la sección «Verificación de límites de GitHub».
-- `ADR-0002` (proposed): stack elegido y alternativas. **Se acepta a la vez que se aprueba esta spec.**
+- `ADR-0002` (accepted el 2026-10-24): stack elegido y alternativas.
+- `SPEC-0003` (draft): se implementa **después** de esta spec y rehace la pantalla de inicio con el sistema de diseño. Por eso los e2e de esta spec siguen el contrato de localizadores de más abajo, para que SPEC-0003 no tenga que modificarlos.
 - `.arda/tools/arda_ci.py` (`checks`) y `.claude/hooks/arda_guard.py` (`stop-checks`): ejecutan `.arda/checks.sh` en el CI y al final de cada turno de Claude, con un límite de 600 s.
 - `.github/workflows/arda-gate.yml` es un fichero del núcleo y no se edita. Solo prepara Python, así que `checks.sh` tiene que conseguir Node, pnpm y Chromium por su cuenta.
 - `mire-app/start` (antes `nom-finance/app`) es **público** desde el 2026-10-24 y no tiene licencia, por decisión del propietario.
@@ -64,11 +65,17 @@ También crea `.arda/checks.sh`, que ejecutan el hook de parada y el CI.
 - **Manifiesto PWA**:
   - `name: "Míre"`, `short_name: "Míre"`, `start_url` y `scope` iguales a `/start/`, y `display: "standalone"`;
   - iconos provisionales PNG de 192 y 512 px (el definitivo llega con SPEC-0003).
-  - El *precache* de Workbox incluye `**/*.{js,css,html,wasm,png,svg,webmanifest}` y el worker de SQLite.
+  - El *precache* de Workbox incluye `**/*.{js,css,html,wasm,png,svg,webmanifest,woff2}` y el worker de SQLite.
   - `registerType: 'autoUpdate'`: la PWA instalada se actualiza sola al publicar una versión nueva.
   - En CA-07, el e2e espera a que el *service worker* controle la página antes de cortar la red.
 - **`src/**/*.test.ts`**: unitarios de `format/`.
 - **`e2e/`**: tests Playwright sobre la build servida por `vite preview` en `/start/`, cada uno con un contexto de navegador nuevo (OPFS vacío). Ver CA-05 a CA-08.
+  - **Contrato de localizadores**: los e2e solo localizan elementos por rol y nombre accesible.
+    - Selector de idioma: un `<select>` nativo, `getByRole('combobox', { name: 'Idioma' | 'Language' })`, con opciones `es` y `en`.
+    - Prueba de almacenamiento: `getByRole('button', { name: 'Probar almacenamiento' | 'Test storage' })`.
+    - Valor del contador: `getByTestId('smoke-count')`.
+    - Aviso de dos pestañas: `getByRole('alert')` con el texto traducido.
+  - Las specs posteriores pueden cambiar el aspecto, pero deben conservar estos roles, nombres y `data-testid`.
 - **`.arda/checks.sh`**: ver CA-09.
 - **`.github/workflows/deploy.yml`**:
   - se lanza con `push` a `main`;
@@ -82,7 +89,6 @@ También crea `.arda/checks.sh`, que ejecutan el hook de parada y el CI.
 - **`README.md`**: requisitos (Node 22) y comandos: `corepack pnpm install`, `corepack pnpm dev` y `bash .arda/checks.sh`.
 - **`docs/project-context.md`**, en «Current state»:
   - stack decidido (ADR-0002);
-  - SPEC-0001 y ADR-0001 pasan a `approved`/`accepted`;
   - existe `.arda/checks.sh` y cómo omite los turnos solo de documentación.
 - **`docs/specs/index.md`**: regenerado.
 
