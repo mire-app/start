@@ -105,12 +105,12 @@ Criterios del MVP. CA-01 a CA-18 se verifican en la spec responsable (tabla «Tr
 6. **CA-06** · Un CSV de un banco sin formato predefinido se importa mediante mapeo de columnas, y el mapeo se puede guardar y reutilizar.
 7. **CA-07** · Antes de confirmar una importación se muestra una previsualización; reimportar el mismo fichero no crea movimientos duplicados; un traspaso importado en ambas cuentas se puede emparejar y no se duplica.
 8. **CA-08** · Existe una lista predefinida de categorías de dos niveles, editable; una regla por texto del concepto categoriza automáticamente los movimientos importados que coinciden.
-9. **CA-09** · El panel muestra el patrimonio total como suma de saldos de cuentas, efectivo y último valor de las inversiones, con desglose por cuenta y tipo y evolución mensual.
+9. **CA-09** · El panel muestra el patrimonio total como suma de saldos de cuentas, efectivo y valor de las cuentas de inversión según CA-01, con desglose por cuenta y tipo y evolución mensual.
 10. **CA-10** · El panel muestra el resumen mensual de ingresos y gastos por categoría, excluyendo traspasos.
 11. **CA-11** · La app funciona sin conexión: con la red cortada se pueden crear y editar datos, y se sincronizan al recuperarla.
 12. **CA-12** · En el repositorio de datos de GitHub no aparece en claro ningún importe, concepto, nombre de cuenta ni categoría, ni en el contenido ni en nombres de fichero ni en mensajes de commit. Los metadatos inevitables (tamaño, fechas y frecuencia de commits) quedan fuera de esta garantía.
 13. **CA-13** · Con cambios pendientes, la sincronización ocurre en ≤ 5 minutos y al pulsar «sincronizar ahora». Un cambio hecho en un dispositivo aparece en otro tras sincronizar ambos; los cambios concurrentes en dispositivos distintos no hacen perder datos sin aviso.
-14. **CA-14** · Las credenciales e integraciones de GitHub usadas por Claude Code no tienen permisos de lectura sobre el repositorio de datos.
+14. **CA-14** · Las credenciales e integraciones de GitHub usadas por Claude Code no tienen permisos (ni de lectura ni de escritura) sobre el repositorio de datos.
 15. **CA-15** · La interfaz se puede cambiar entre español e inglés; importes y fechas se muestran en formato es-ES por defecto.
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
@@ -134,5 +134,6 @@ Criterios del MVP. CA-01 a CA-18 se verifican en la spec responsable (tabla «Tr
 ### Preguntas abiertas (para specs posteriores)
 - Autenticación con GitHub desde web y móvil: SPEC-0002. Estrategia de conflictos (último cambio gana o preguntar): SPEC-0008.
 - Alojamiento gratuito de la web: SPEC-0002.
+- ¿Se admiten ingresos o gastos directos en una cuenta de inversión, o solo traspasos y valoraciones?: SPEC-0006.
 - Contenido de la lista inicial de categorías: SPEC-0007.
 - Custodia y rotación de la clave, borrado por destrucción de la clave (*crypto-shredding*), nombre del repositorio de datos y alcance del RGPD: SPEC-0005.
