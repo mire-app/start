@@ -8,7 +8,7 @@ summary: .xlsx con ExcelJS (sin .xls), CSV con PapaParse, PDF con pdfjs-dist, to
 # ADR-0004 · Librerías de importación (ExcelJS, PapaParse, pdf.js) e identificadores UUIDv7
 
 ## Contexto
-SPEC-0004 lee los extractos del propietario **en su navegador, sin enviarlos a ningún servidor**:
+SPEC-0011 y SPEC-0012 leen los extractos del propietario **en su navegador, sin enviarlos a ningún servidor**:
 - BBVA: informe en `.xlsx`, que puede traer varias cuentas;
 - MyInvestor: movimientos en `.xlsx` y cartera **solo en PDF**;
 - otros bancos: CSV o `.xlsx` con mapeo manual.
@@ -30,7 +30,22 @@ Lo comprobado el 2026-10-24:
 | Importes | **Céntimos enteros** (`INTEGER`) en EUR, nunca coma flotante. Las participaciones de fondos se guardan como **texto decimal**, para no perder precisión. |
 | Huellas | **SHA-256 con WebCrypto** (nativo): huella de cada movimiento para detectar duplicados y huella de cada fichero. |
 | Ficheros de prueba | **pdf-lib** (MIT, solo desarrollo) genera el PDF sintético; ExcelJS genera los `.xlsx` sintéticos. |
+| Scripts de `tools/` | **tsx** (MIT, solo desarrollo) ejecuta los scripts en TypeScript que importan código de `src/`. En Node, pdf.js usa su build `legacy`. |
+| Dónde se ejecuta | La lectura, el plan y la confirmación se ejecutan **en el worker de la base de datos** (SPEC-0004); `uuid` y las tres librerías se cargan allí. |
 | Versiones | Exactas, como en ADR-0002. |
+
+Versiones de referencia (npm, 2026-10-24); se fijan exactas al implementar:
+
+| Paquete | Versión | Licencia | Peso aproximado en la app (minificado) |
+|---|---|---|---|
+| `exceljs` | 4.4.0 | MIT | ~1 MB (build de navegador) |
+| `papaparse` | 5.7.0 | MIT | ~20 KB |
+| `pdfjs-dist` | 6.4.299 | Apache-2.0 | ~0,4 MB, más ~1 MB del *worker* |
+| `uuid` | 14.0.3 | MIT | < 5 KB |
+| `pdf-lib` | 1.17.1 | MIT | solo desarrollo |
+| `tsx` | 4.23.15 | MIT | solo desarrollo |
+
+En total, unos 2,5 MB más en el *precache* de la PWA. Se descargan una vez y se cargan solo al importar.
 
 ## Alternativas consideradas
 | Alternativa | Por qué no |
