@@ -176,6 +176,7 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
    |---|---|
    | Tercer nivel de categoría | `category_depth` |
    | Dar padre a una categoría con hijos | `category_depth` |
+   | Tercer nivel con `sync_state.merging` puesto | no falla; al quitar `merging`, vuelve a fallar con `category_depth` |
    | `linkTransfer` sobre un movimiento `external` | `transfer_invalid` |
    | `kind='external'` con importe negativo | `CHECK` |
    | `kind='transfer'` sin grupo, o `regular` con grupo | `CHECK` |

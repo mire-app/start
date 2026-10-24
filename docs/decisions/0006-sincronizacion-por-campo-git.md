@@ -37,7 +37,7 @@ summary: Registro de cambios por campo y por grupos atómicos capturado con trig
    - un ciclo de descarga se valida entero y se aplica en **una transacción**, con las claves ajenas diferidas y las tablas en orden de dependencias;
    - los borrados son el campo `deleted_at` y siguen la misma regla.
 4. **Reparaciones deterministas tras fusionar**, con el mismo resultado en todos los dispositivos y un aviso local:
-   - `UNIQUE`: gana la fila creada antes;
+   - `UNIQUE`: tras aplicar los borrados lógicos del ciclo, en las colisiones que sigan existiendo gana la fila creada antes;
    - profundidad de categorías: se deshace el enlace más reciente;
    - valoraciones en una cuenta que no es de inversión: la cuenta vuelve a ser de inversión;
    - traspasos inválidos: se desvinculan.

@@ -44,7 +44,8 @@ Que cualquier persona pueda activar la sincronización **sin ayuda técnica**, s
 ### 1. Asistente «Conectar con GitHub» (Ajustes › Sincronización)
 **Sugerencia en Inicio** (no bloquea): con la sincronización desactivada, Inicio muestra una tarjeta, «Usa Míre en más dispositivos», con dos acciones:
 - **«Conectar con GitHub»**;
-- **«Ocultar»**, que la oculta para siempre en este dispositivo (preferencia local en `localStorage`).
+- **«Ocultar»**, que la oculta para siempre en este dispositivo (preferencia local en `localStorage`, con la clave `mire.syncCardHidden`, que el borrado de SPEC-0013 elimina con las demás `mire.*`).
+- La tarjeta se monta en Inicio (SPEC-0006), justo debajo del patrimonio.
 
 **Pasos**: tres, con indicador de progreso, «Atrás» y textos de ayuda.
 
@@ -73,7 +74,7 @@ Que cualquier persona pueda activar la sincronización **sin ayuda técnica**, s
    5. **caducidad**: la cabecera `github-authentication-token-expiration` si se puede leer; si no, hoy + 366 días, editable en Ajustes;
    6. **`sync.inspectRemote`**:
       - **`empty`**: `sync.initRemote`. Un 403 (`forbidden`) en el primer commit da «El token no tiene permiso de escritura (*Contents: Read and write*)»;
-      - **`mire`**: «Este repositorio ya tiene datos de Míre». Si el dispositivo tiene datos (`local_not_empty`), añade «Para usar los del repositorio, borra antes los de este dispositivo (Ajustes › Datos)». Si no los tiene, «Usar los datos del repositorio» lleva al alta del punto 2, desde el paso de la contraseña: el anillo y el PIN locales se sustituyen por los del repositorio y un PIN nuevo;
+      - **`mire`**: «Este repositorio ya tiene datos de Míre». Si el dispositivo tiene datos (`sync.localIsEmpty()` falso), añade «Para usar los del repositorio, borra antes los de este dispositivo (Ajustes › Datos)». Si no los tiene, «Usar los datos del repositorio» lleva al alta del punto 2, desde el paso de la contraseña: el anillo y el PIN locales se sustituyen por los del repositorio y un PIN nuevo;
       - **`other`**: «Ese repositorio tiene otros ficheros. Usa uno nuevo y vacío».
    7. **Solo si todo va bien**: `setGithubToken(token, expiresAt)`.
    - **Al terminar**: «Conectado con `<usuario>/<nombre>`», y arranca la primera sincronización.
@@ -97,7 +98,7 @@ Que cualquier persona pueda activar la sincronización **sin ayuda técnica**, s
 Como la clave también depende de la contraseña maestra, el enlace y el código **solos** no bastan para sacar el token.
 
 #### Al abrir el enlace (`#/vincular?d=…`)
-- La app guarda `d` en memoria y quita el fragmento con `history.replaceState`, **antes** de `SecurityGate`.
+- La app guarda `d` en memoria y quita el fragmento con `history.replaceState`, **antes** de `SecurityGate`. En un dispositivo con anillo, el enlace se procesa después de desbloquear.
 - Pantalla con **«Código del otro dispositivo»** y **«Contraseña maestra»**.
   - Si no descifra: «El código o la contraseña no son correctos».
   - Si `exp` ya pasó: «El enlace ha caducado. Genera otro».
@@ -155,7 +156,8 @@ Además de «Empezar», el botón **«Ya uso Míre en otro dispositivo»**, con 
 - **`remote_missing`**: «No encuentro tu repositorio de datos. ¿Lo has borrado?», con:
   - «Reintentar»;
   - «Desconectar y seguir solo aquí» (`pause`);
-  - «Borrar los datos de este dispositivo» (diálogo de SPEC-0013).
+  - «Borrar los datos de este dispositivo» (diálogo de SPEC-0013);
+  - «Conectar con un repositorio nuevo», que abre el asistente; con un repositorio nuevo y vacío, `initRemote` sube los datos de este dispositivo.
 
 **«Renovar token»**:
 - abre `https://github.com/settings/personal-access-tokens`, con la instrucción «Abre el token «Míre», pulsa *Regenerate token* y cópialo»;
@@ -187,7 +189,7 @@ Antes de borrar se llama a `sync.stop()`.
 - dos contextos pueden compartir un repositorio simulado;
 - ningún test abre `github.com`: solo se comprueban los `href`;
 - los e2e no aceptan sugerencias de traspaso;
-- con `page.clock`, el test mueve el ratón en cada minuto simulado para que no salte el autobloqueo (SPEC-0005).
+- con `page.clock`, el test hace un clic en una zona neutra en cada minuto simulado (SPEC-0005 solo cuenta `pointerdown` y `keydown`), para que no salte el autobloqueo.
 
 **Ficheros e2e** (como máximo 4):
 - `sync-conectar.spec.ts`: CA-01, CA-08 y CA-09;

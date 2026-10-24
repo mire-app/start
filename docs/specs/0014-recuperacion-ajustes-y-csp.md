@@ -36,7 +36,7 @@ Completar la seguridad de SPEC-0005 con:
 
 ### 2. Diálogo «Seguridad…» (menú de `TopBar` → **«Seguridad…» / «Security…»**)
 - **Cambiar PIN**: pide el PIN actual y el nuevo dos veces. El PIN actual se verifica con `unlockWithPin`, de modo que **cuenta como intento** y aplica el límite de 5 fallos.
-- **Cambiar contraseña maestra**: pide la actual y la nueva dos veces; reenvuelve la DEK.
+- **Cambiar contraseña maestra**: pide la actual y la nueva dos veces; reenvuelve la DEK. Si hay un anillo pendiente de otro dispositivo (SPEC-0008), primero hay que desbloquear con la contraseña de ese anillo; lo mismo al regenerar el código.
 - **Regenerar código de recuperación**: pide la contraseña, muestra el código nuevo y exige confirmación; el anterior deja de valer al confirmar.
 - **Token de GitHub**: estado con `tokenStatus()` (configurado sí o no, y fecha de caducidad). La configuración del token es de SPEC-0020.
 

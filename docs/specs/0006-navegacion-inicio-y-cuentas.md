@@ -54,6 +54,7 @@ Dar a Míre su navegación y sus dos primeras pantallas de uso:
 
 ### 2. Inicio (`#/`)
 - **Patrimonio**: `netWorth(hoy)` con `Amount kind="balance"` en grande, con el título «Patrimonio» / «Net worth».
+- **Secciones de otras specs**: SPEC-0020 (tarjeta de sincronización) y SPEC-0009 (panel) añaden secciones entre el patrimonio y los grupos.
 - **Grupos** que tengan alguna cuenta **no archivada**, ordenados por nombre. Cada uno muestra su total (`groupValue`, que **incluye las cuentas archivadas**, con la nota «incluye archivadas» si las hay) y sus cuentas no archivadas, ordenadas por nombre.
 - **Cuentas sin grupo y no archivadas**, por tipo (Corriente, Ahorro, Efectivo, Inversión) y por nombre dentro de cada tipo.
 - **Cada fila**: nombre, institución y saldo o valor. Es un enlace a `#/cuentas/:id`.

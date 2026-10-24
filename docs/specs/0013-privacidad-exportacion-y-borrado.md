@@ -116,7 +116,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
    - al configurar de nuevo, la prueba de almacenamiento muestra **0** y `db-version` muestra 1;
    - con `BORRA` o con una contraseña errónea no se borra nada.
 4. **CA-04** · e2e con dos pestañas: con una segunda página abierta, el borrado se cancela con el aviso de otras pestañas y no borra nada.
-5. **CA-05** · `eraseAll({ remote: true })` devuelve `remote_not_available` y no borra nada (Vitest). Si se simula un fallo en el paso 1, `mire-keys` sigue existiendo.
+5. **CA-05** · `eraseAll({ remote: true })` devuelve `remote_not_available` y no borra nada (Vitest). Si se simula un fallo en el paso 1, `mire-keys` sigue existiendo. Con la sincronización activa, `eraseAll` llama a `sync.stop()` antes de borrar ningún fichero (con un `sync` simulado).
 6. **CA-06** · Aviso de privacidad (e2e):
    - se abre desde la bienvenida sin configurar, y también sin conexión tras la primera visita;
    - tiene versión es y en con los apartados del punto 3;

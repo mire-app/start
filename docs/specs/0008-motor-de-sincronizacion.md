@@ -67,6 +67,7 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 - **Formato**: `"<ms, 13 dígitos>-<contador, 4 hex>-<deviceId>"`, comparable como texto.
 - **`now(last, wallMs)`**: avanza sobre el reloj de pared y sobre el último visto. Si el contador llegaría a `ffff`, espera al milisegundo siguiente.
 - **`receive(last, remote, wallMs)`**: avanza con un HLC remoto. Si el remoto va **más de 24 h por delante** del reloj de pared, el ciclo se anula con `clock_skew` y el aviso del mismo nombre, sin aplicar nada.
+  - **Recuperación**: el aviso ofrece «Aplicar de todos modos» (`sync.acceptSkew()`). El siguiente ciclo aplica igualmente y el reloj local avanza hasta el remoto.
 - **Relojes fijos**:
   - `SEED_HLC = "1767225600000-0000-0"` (2026-01-01T00:00:00Z, SPEC-0007);
   - `fromIso(iso)`: `"<ms>-0000-0"`.
@@ -96,6 +97,8 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 - **Sin contexto**: una escritura con la captura instalada y sin `sync_ctx` **falla** con `sync_ctx_missing`.
 
 **Contexto**: el envoltorio de transacción de `src/db/api.ts` fija `temp.sync_ctx = { hlc: now(), mode: 'local' }` en cada llamada que escribe, y lo restaura en un `finally`. Una llamada usa un único HLC.
+- **Modo `seed`**: el mapa de la API declara metadatos por método. `categories.seedDefaults` lleva `{ ctxMode: 'seed' }`, y el envoltorio usa entonces `mode = 'seed'` y `SEED_HLC`.
+- **Claves de `sync_state`**: `deviceId`, `repo`, `enabled`, `paused`, `headSha`, `nextSeq`, `lastHlc`, `lastSyncAt`, `lastCompactAt`, `keyringSha`, `pendingKeyring`, `acceptSkew` y `merging`.
 
 **Tests en Node**: los que no llaman a `installCapture(db)` no tienen *triggers* y no cambian.
 
@@ -116,15 +119,18 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 
 - **Cada `.bin`**: byte de versión `1`, IV de 12 bytes y `AES-GCM_DEK(gzip(JSON))`, con la AAD `"mire:" + ruta`.
 - **Cada lote**: `{ schemaVersion, deviceId, entries: [{ t, r, f, v, h }] }`.
-  - Como máximo 512 KB de JSON antes de comprimir.
-  - **Nunca separa entradas con el mismo HLC** en dos lotes.
+  - Como máximo 512 KB de JSON antes de comprimir. Una llamada grande (una importación) puede repartir su HLC entre varios lotes: es seguro, porque `push` sube todos los lotes en un commit y `pull` los aplica en una sola transacción, agrupando por fila y grupo.
 - **Descompresión**: limitada a 50 MB por fichero; si se supera, `sync_corrupt`.
 - **Commits**: el mensaje es siempre `mire sync`. Ni las rutas ni los mensajes llevan importes, conceptos, nombres de cuentas ni categorías (SPEC-0001 CA-12).
-- **Repositorio «vacío»** (definición única, la que usa SPEC-0020): sin commits, o con un árbol que solo contiene `README.md`, `LICENSE` o `.gitignore`.
+- **Estado del repositorio** (definición única, la que usa SPEC-0020):
+  - **`empty`**: sin commits; un árbol que solo contiene `README.md`, `LICENSE` o `.gitignore`; o uno que además tiene `format.json` pero **no** `keyring.json` (un `initRemote` interrumpido, que se reanuda);
+  - **`mire`**: tiene `format.json` y `keyring.json`;
+  - **`other`**: cualquier otro caso.
 
 ### 6. Transporte (`src/sync/github.ts`)
 - **Token**: todas las funciones reciben el **token como parámetro**. El motor lo obtiene con `getGithubToken()` (con Míre desbloqueada). El asistente y el alta de SPEC-0020 pasan el que tienen en memoria.
 - **Lectura**:
+  - `GET /user` y `GET /user/repos?per_page=2`, para las comprobaciones de SPEC-0020;
   - `GET /repos/{r}`, para la rama por defecto y `private`;
   - `GET /repos/{r}/git/ref/heads/{rama}`; un 409 «Git Repository is empty» significa repositorio sin commits;
   - `GET /git/commits/{sha}`;
@@ -158,6 +164,7 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
    - El anillo local **no** se sustituye todavía.
    - Se adopta en el siguiente desbloqueo con contraseña: si la contraseña desenvuelve el pendiente y la DEK resultante descifra un fichero remoto, el pendiente sustituye al local.
    - Con el PIN se sigue desbloqueando igual, porque envuelve la misma DEK.
+   - Mientras haya un anillo pendiente, cambiar la contraseña o regenerar el código en este dispositivo (SPEC-0014) pide antes desbloquear con la contraseña nueva. Así nunca cambian a la vez los dos anillos.
 
 **Subir** (`push`):
 1. Toma **toda** la cola, partida en lotes.
@@ -185,7 +192,8 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 
 **Agrupación y orden**:
 - se juntan las entradas de todos los ficheros del ciclo (la instantánea primero) por tabla, fila y grupo, y en cada grupo se queda la de mayor HLC;
-- se recorren las tablas en el orden de `SYNC_TABLE_ORDER`.
+- se recorren las tablas en el orden de `SYNC_TABLE_ORDER`;
+- **dentro de cada tabla, primero las filas cuyo `deleted_at` pasa a no nulo**, porque liberan claves `UNIQUE` (p. ej. la valoración reemplazada de SPEC-0012, o una regla borrada y vuelta a crear), y después el resto, por `id`.
 
 **Por fila**:
 - **Identificadores**: `t` y `f` solo se aceptan si están en `SYNCED_TABLES`; si no, `sync_corrupt`. Los valores van siempre como **parámetros**, nunca interpolados.
@@ -194,9 +202,9 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 - **Reloj**: `receive` avanza con el mayor HLC recibido.
 
 **`UNIQUE`**: si una fila choca con otra viva por un índice `UNIQUE`:
-- gana la de menor `created_at` (en empate, menor `id`);
-- la perdedora recibe `deleted_at` antes de aplicar.
-- El resultado es el mismo sea cual sea el orden de llegada.
+1. se pospone al final de su tabla y se reintenta una vez, por si otra fila del ciclo cambia esa clave (intercambio de claves);
+2. si sigue chocando, gana la de menor `created_at` (en empate, menor `id`), y la perdedora recibe `deleted_at` antes de aplicar.
+- Solo se resuelven así las colisiones que **siguen existiendo tras aplicar los borrados del ciclo**, y el resultado no depende del orden de llegada.
 
 **Reparaciones deterministas**, tras aplicar todo y dentro de la misma transacción, con `mode = 'local'` y repetidas hasta que no haya cambios (como máximo 5 pasadas):
 1. **`UNIQUE`**: las perdedoras del paso anterior quedan borradas como cambio local. Aviso `unique_resolved { table, keptId, removedId }`.
@@ -212,7 +220,10 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 
 Las reparaciones generan los mismos valores en todos los dispositivos. Aunque cada uno use su propio HLC, convergen.
 
+**Sin punto fijo**: si tras 5 pasadas sigue habiendo cambios, el ciclo se revierte con `sync_repair_loop`. No se aplica nada y queda un aviso.
+
 **Final**: se quita `merging`, se restaura el contexto (`finally`) y se confirma la transacción.
+- **Clave ajena rota al confirmar**: la transacción se revierte con `sync_fk_violation` y los ficheros no se anotan como aplicados. Se reintenta en el siguiente ciclo, porque normalmente falta un fichero que aún no había llegado. Si falla en 3 ciclos seguidos, queda el aviso del mismo nombre.
 
 **Avisos**: `sync_notice` tiene una clave `dedupe_key` (p. ej. `duplicate_import:<later>`). Un aviso ya registrado no se repite. `sync.notices()` devuelve los no vistos y `sync.markSeen(seq)` los marca.
 
@@ -226,14 +237,17 @@ Las reparaciones generan los mismos valores en todos los dispositivos. Aunque ca
 
 ### 10. API para SPEC-0020
 - **`sync.inspectRemote(repo, token)`** → `'empty' | 'mire' | 'other'`, más el anillo si es `mire` (definición de «vacío» en el punto 5).
-- **`sync.initRemote(repo, token)`**, en un repositorio vacío:
-  1. hace el arranque con la API Contents si no hay commits;
-  2. hace un commit con `keyring.json` y una instantánea de todo (dos commits en total si no había ninguno, ambos `mire sync`);
-  3. activa la captura.
-  - Si el repositorio no está vacío, da `remote_not_empty`.
+- **`sync.initRemote(repo, token)`**, en un repositorio `empty`:
+  1. **activa la captura** antes de leer nada. Lo que se escriba durante la subida queda en la cola; si además queda en la instantánea, el duplicado es inofensivo;
+  2. hace el arranque con la API Contents si no hay commits (con `format.json`);
+  3. hace un commit con `keyring.json` y una instantánea de todo (dos commits en total si no había ninguno, ambos `mire sync`).
+  - Si falla tras el arranque, el repositorio queda `empty` (solo `format.json`), y un nuevo `initRemote` lo reanuda.
+  - Si el repositorio no es `empty`, da `remote_not_empty`.
+  - Vale también para empezar en un repositorio **nuevo** después de `remote_missing`, con los datos locales que haya.
 - **`sync.joinRemote(repo, token)`**:
   - descarga la instantánea y los `ops/**` y activa la captura;
-  - exige un dispositivo **sin datos**: ninguna fila viva en `SYNCED_TABLES`, salvo las filas sembradas sin cambios (con `SEED_HLC` en todas sus columnas); si no, da `local_not_empty`;
+  - exige un dispositivo **sin datos**: ninguna fila viva en `SYNCED_TABLES`, salvo las filas sembradas sin cambios (con `created_at = updated_at` igual a la marca fija de SPEC-0007); si no, da `local_not_empty`;
+  - `sync.localIsEmpty()` hace esa misma comprobación, sin efectos. La usa el asistente de SPEC-0020 antes de descargar nada;
   - se ejecuta **antes** de la siembra de SPEC-0007, y la siembra posterior no hace nada porque ya hay categorías.
 - **`sync.status()`** → `{ state, error?, lastSyncAt, pending }`:
   - `state` es `'off' | 'idle' | 'syncing' | 'offline' | 'error' | 'locked'`;
@@ -258,7 +272,7 @@ Las reparaciones generan los mismos valores en todos los dispositivos. Aunque ca
 - Pantallas, conexión, vinculación, caducidad del token y estado visible: SPEC-0020.
 - Borrar el repositorio remoto desde la app: el token solo tiene *Contents*. Se elimina en GitHub (SPEC-0014 y SPEC-0020).
 - Fusionar dos conjuntos de datos independientes (un dispositivo con datos que se une a otro repositorio).
-- Conectar a un repositorio distinto tras desconectar sin borrar antes los datos locales.
+- Unirse a un repositorio con **otros datos** sin borrar antes los locales. Sí se admite empezar en un repositorio nuevo y vacío con los datos locales (`initRemote`).
 - Varios usuarios u hogar.
 
 ## Criterios de aceptación
@@ -295,7 +309,10 @@ Todos son tests de Vitest:
      - una compactación.
    - Los ficheros se aplican en órdenes distintos, y los ciclos se repiten hasta que no quedan cambios derivados.
    - Al final, las 3 bases son idénticas en todas las tablas de `SYNCED_TABLES` y todas cumplen los `CHECK`, `category_depth`, `valuation_account_type` y la coherencia de traspasos.
-5. **CA-05** · `UNIQUE`: A y B crean una regla «CAFETERIA» (SPEC-0018) sin sincronizar. Tras fusionar, en las dos queda viva la de menor `created_at`, la otra queda borrada, y hay **un solo** aviso `unique_resolved` aunque se repitan los ciclos.
+5. **CA-05** · `UNIQUE`:
+   - A y B crean una regla «CAFETERIA» (SPEC-0018) sin sincronizar. Tras fusionar, en las dos queda viva la de menor `created_at`, la otra queda borrada, y hay **un solo** aviso `unique_resolved` aunque se repitan los ciclos;
+   - **borrado y alta con la misma clave**: A reemplaza una valoración (SPEC-0012) y borra y vuelve a crear la regla «SUPER». B recibe esos cambios con el alta antes que el borrado y con el orden contrario. En los dos casos queda viva la nueva, borrada la vieja, y no hay aviso;
+   - **intercambio**: A cambia la regla «X» a «Y» y la «Y» a «X» en una llamada. B las aplica sin aviso y con el intercambio hecho.
 6. **CA-06** · Invariantes:
    - **grupo de campos**: A hace `linkTransfer` sobre un movimiento y B, sin sincronizar y con un HLC posterior, hace `setKind('external')` sobre ese mismo movimiento. Tras fusionar, el movimiento es `external` sin grupo, su antigua pareja se desvincula y hay un aviso `transfer_unlinked`;
    - **traspaso huérfano**: B desvincula el traspaso de 500 € y vincula su lado de «Diario» con un movimiento sintético M3 (+500, en otra cuenta); A, con un HLC posterior, desvincula el traspaso original. Tras fusionar, M3 queda `regular`;
@@ -308,9 +325,9 @@ Todos son tests de Vitest:
    - A renombra «Compras» y B siembra después, sin conexión. Tras fusionar, las dos tienen el nombre de A;
    - A borra «Ocio» y B siembra después. Tras fusionar, «Ocio» está borrada en las dos.
 9. **CA-09** · Cifrado (SPEC-0001 CA-12). Con BBVA, MyInvestor y el PDF de SPEC-0011 y SPEC-0012 importados, categorías y una regla, se hace `initRemote` y dos ciclos. Después:
-   - **lista de comprobación**: «GASOLINERA EJEMPLO», «CAFETERIA EJEMPLO», «Diario», «MyInvestor efectivo», «FONDO EJEMPLO RENTA VARIABLE GLOBAL», «LU0000000001», «Transporte», «CAFETERIA», «2.450,12», «2450,12» y «-51,56»;
-   - **control positivo**: al descifrar con la DEK, el contenido de los ficheros sí contiene esas cadenas;
-   - ninguna aparece en las rutas, en los mensajes de commit ni en `format.json` o `keyring.json`;
+   - **lista que viaja cifrada**: «GASOLINERA EJEMPLO», «CAFETERIA EJEMPLO», «Diario», «MyInvestor efectivo», «FONDO EJEMPLO RENTA VARIABLE GLOBAL», «LU0000000001», «Transporte», «CAFETERIA», `245012` y `-5156`;
+   - **control positivo**: al descifrar con la DEK, el contenido de los ficheros sí contiene todas las cadenas de esa lista;
+   - ni esas cadenas ni las formateadas «2.450,12», «2450,12» y «-51,56» aparecen en las rutas, en los mensajes de commit ni en `format.json` o `keyring.json`;
    - los `.bin` no se descifran con otra clave;
    - las rutas cumplen `^(format\.json|keyring\.json|(ops|devices|snapshots)/[0-9a-f-]+(/[0-9a-z.-]+)*\.bin)$`;
    - todos los mensajes son `mire sync`.
@@ -318,6 +335,8 @@ Todos son tests de Vitest:
     - con dos ficheros nuevos en un ciclo, cambiar un byte del **segundo** da `sync_corrupt` y no aplica **ninguno**;
     - mover un `.bin` válido a otra ruta también da `sync_corrupt`;
     - un lote con un `t` que no está en `SYNCED_TABLES` da `sync_corrupt`;
+    - un lote con un movimiento cuya cuenta no llega da `sync_fk_violation`, no se anota y se aplica en el ciclo en que llega la cuenta;
+    - un `clock_skew` se aplica tras `acceptSkew()`;
     - uno con un `schemaVersion` mayor da `update_required` y no se anota como aplicado.
 11. **CA-11** · Compactación:
     - con 501 lotes, el siguiente ciclo crea una instantánea y deja `ops/` vacío en **un** commit;
@@ -327,6 +346,8 @@ Todos son tests de Vitest:
 12. **CA-12** · Transporte:
     - si otro dispositivo sube entre la lectura y la actualización de la referencia, el `push` recibe 422, descarga, aplica y vuelve a subir, sin perder ningún lote;
     - `initRemote` sobre un repositorio sin commits (409) hace el arranque con Contents y deja `format.json`, `keyring.json` y la instantánea;
+    - con un fallo del segundo commit, `inspectRemote` da `empty`, y un nuevo `initRemote` termina el trabajo;
+    - un movimiento escrito durante `initRemote` llega a otra base que se une después;
     - un árbol `truncated` se recorre por directorios;
     - los errores 401, 403, 404, 429 y 5xx dan sus códigos.
 13. **CA-13** · Planificación (temporizadores simulados):
@@ -343,7 +364,7 @@ Todos son tests de Vitest:
 15. **CA-15** · Unirse y pausar:
     - `joinRemote` en un dispositivo que solo tiene la siembra funciona, y da `local_not_empty` si tiene una cuenta;
     - tras `pause()`, un cambio local queda en la cola, y `resume` con el mismo repositorio lo sube.
-16. **CA-16** · Tamaño: una importación sintética de 5.000 movimientos generada en el test produce varios lotes en **un** commit, cada uno de 512 KB o menos antes de comprimir. Ningún HLC queda repartido entre dos lotes, y otra base que los aplica llega al mismo estado.
+16. **CA-16** · Tamaño: una importación sintética de 5.000 movimientos generada en el test produce varios lotes en **un** commit, cada uno de 512 KB o menos antes de comprimir. Otra base que los aplica en un único ciclo llega al mismo estado.
 17. **CA-17** · Sin regresiones:
     - `db-version` sigue en 1;
     - la exportación de SPEC-0013 no incluye tablas `sync_*`;

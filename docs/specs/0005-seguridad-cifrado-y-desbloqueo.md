@@ -46,7 +46,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
   - las operaciones que necesitan reenvolverla (crear o cambiar el PIN, cambiar la contraseña, regenerar el código) la desenvuelven extraíble de nuevo desde el secreto que el usuario acaba de introducir, y la descartan al terminar.
 - **`keyring.ts`** (todas aceptan `opts = { kdf?, bounds? }`, solo para inyectar parámetros en los tests):
   - `createKeyring(password, opts)` → `{ keyring, recoveryCode, dek }`;
-  - `unlockWithPassword(keyring, password, opts)` → DEK, o el error `wrong_password`;
+  - `unlockWithPassword(keyring, password, opts)` → DEK, o el error `wrong_password`. Si SPEC-0008 ha dejado un **anillo pendiente** y la contraseña no abre el local, se prueba con el pendiente, que se adopta si da la misma DEK;
   - `unlockWithRecoveryCode(keyring, code, opts)` → DEK, o el error `wrong_recovery_code` (lo usa SPEC-0014);
   - `rewrapPassword(...)` y `regenerateRecoveryCode(...)` (las usa SPEC-0014).
 - **Parámetros de Argon2id** (`hash-wasm`, versión exacta):
