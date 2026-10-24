@@ -59,11 +59,14 @@ También crea `.arda/checks.sh`, que ejecutan el hook de parada y el CI.
     - Usa un fichero propio del esqueleto, `/nom-smoke.sqlite3`, con la tabla `smoke(id INTEGER PRIMARY KEY CHECK (id = 1), n INTEGER NOT NULL)`.
     - SPEC-0004 lo eliminará al crear la base de datos real.
     - Si la base de datos no se puede abrir porque otra pestaña la tiene en uso, la pantalla muestra el aviso traducido «NÖM ya está abierto en otra pestaña» en lugar de fallar.
+    - Antes de mostrar el aviso reintenta abrirla durante ~1 s, para no darlo por error justo después de recargar.
   - **Prueba de almacenamiento**: un botón «Probar almacenamiento» suma 1 a `smoke.n` y la pantalla muestra el valor actual.
 - **Manifiesto PWA**:
   - `name: "NÖM"`, `short_name: "NÖM"`, `start_url` y `scope` iguales a `/app/`, y `display: "standalone"`;
   - iconos provisionales PNG de 192 y 512 px (el definitivo llega con SPEC-0003).
   - El *precache* de Workbox incluye `**/*.{js,css,html,wasm,png,svg,webmanifest}` y el worker de SQLite.
+  - `registerType: 'autoUpdate'`: la PWA instalada se actualiza sola al publicar una versión nueva.
+  - En CA-07, el e2e espera a que el *service worker* controle la página antes de cortar la red.
 - **`src/**/*.test.ts`**: unitarios de `format/`.
 - **`e2e/`**: tests Playwright sobre la build servida por `vite preview` en `/app/`, cada uno con un contexto de navegador nuevo (OPFS vacío). Ver CA-05 a CA-08.
 - **`.arda/checks.sh`**: ver CA-09.
@@ -104,8 +107,9 @@ También crea `.arda/checks.sh`, que ejecutan el hook de parada y el CI.
 2. **CA-02** · `lint`, `format:check` y `typecheck` terminan sin errores, con TypeScript en `strict`.
 3. **CA-03** · `test` (Vitest) pasa y comprueba exactamente:
    - `formatEUR(1234.56) === "1.234,56 €"`;
-   - `formatEUR(-5) === "-5,00 €"`;
-   - `formatDate("2026-10-24") === "24/10/2026"`, con cualquier valor de `TZ` (el test se ejecuta con `TZ=Pacific/Kiritimati` y con `TZ=America/Los_Angeles`).
+   - `formatEUR(-5) === "-5,00 €"`.
+   - En ambos casos el test escribe el separador como el escape ` ` (NBSP), no como un espacio normal.
+   - `formatDate("2026-10-24") === "24/10/2026"`, con cualquier valor de `TZ`. El script `test` lanza Vitest dos veces, con `TZ=Pacific/Kiritimati` y con `TZ=America/Los_Angeles`.
 4. **CA-04** · `build` genera un `dist/` estático que funciona servido bajo `/app/`.
 5. **CA-05** · e2e de idioma.
    - La pantalla de inicio carga en español y `<html lang="es">`.
@@ -118,8 +122,10 @@ También crea `.arda/checks.sh`, que ejecutan el hook de parada y el CI.
    - El manifiesto enlazado desde `index.html` tiene `name`, `start_url` y `scope` iguales a `/app/`, `display: standalone` e iconos de 192 y 512 px.
 8. **CA-08** · e2e de dos pestañas: con la app abierta en una página, una segunda página del mismo contexto muestra el aviso «NÖM ya está abierto en otra pestaña», y la primera sigue funcionando.
 9. **CA-09** · `.arda/checks.sh`:
-   - **Modo de omisión**: si no estamos en CI (`CI` no vale `true`) y todos los cambios frente a `origin/main` (commits y árbol de trabajo) están bajo `docs/`, termina con éxito sin ejecutar nada. Si no puede calcular los cambios, ejecuta todo.
-   - **Node**: si `node` falta o no es 22.x, descarga la versión de `.nvmrc` desde nodejs.org en `.cache/node` y la antepone al `PATH`. Ejecuta pnpm con `corepack pnpm`, sin `sudo` ni instalación global.
+   - **Modo de omisión**: si no estamos en CI (`CI` no vale `true`) y todos los cambios frente a `origin/main` (commits y árbol de trabajo) están bajo `docs/` o son `.arda/active-spec`, termina con éxito sin ejecutar nada. Si no puede calcular los cambios, ejecuta todo.
+   - **Node**: si `node` falta o no es 22.x, descarga la versión de `.nvmrc` desde nodejs.org en `.cache/node` y la antepone al `PATH`.
+     - Verifica el fichero descargado contra el `SHASUMS256.txt` de esa versión y falla si no coincide.
+   - **pnpm**: lo ejecuta con `corepack pnpm`, sin `sudo` ni instalación global.
    - **Chromium**: ejecuta `playwright install chromium`, que no hace nada si ya está. Añade `--with-deps` solo si `sudo -n true` funciona.
    - **Pasos**: en este orden, y parando en el primer fallo: instalación, versiones exactas (CA-01), lint, formato, tipos, unitarios, build y e2e.
    - **Entornos**: funciona en la sesión cloud de Claude Code y en `arda-gate` de GitHub Actions.
@@ -134,7 +140,9 @@ También crea `.arda/checks.sh`, que ejecutan el hook de parada y el CI.
 ### Riesgos
 - **Coste del hook de parada**: si hay cambios de código, `checks.sh` completo corre al final de cada turno de Claude. Mitigación: modo de omisión para turnos solo de documentación, pocos e2e solo en Chromium, y límite de 5 minutos (CA-09).
 - **Playwright preinstalado**: si la sesión cloud cambia de versión, `playwright install chromium` descargará la que corresponda. Funciona, pero es más lento.
-- **Falso positivo del *secret scan***: el patrón `sk-…` de `arda_ci.py` no tiene límite de palabra y podría coincidir con un nombre de paquete en `pnpm-lock.yaml`. `arda_ci.py` es un fichero del núcleo y no se edita. Si ocurre, se avisa al propietario y se reporta a daeron-core.
+- **Falso positivo del *secret scan***: el patrón `sk-…` de `arda_ci.py` no tiene límite de palabra y podría coincidir con un nombre de paquete en `pnpm-lock.yaml`. `arda_ci.py` es un fichero del núcleo y no se edita. Mitigación: antes de abrir el PR se ejecuta `python3 .arda/tools/arda_ci.py secrets` en local. Si da un falso positivo, se avisa al propietario y se reporta a daeron-core antes de abrir el PR.
+- **Primera ejecución en una sesión nueva**: posible descarga de Node, `pnpm install` y Chromium. Cuenta contra el límite de 600 s del hook, y CA-09 solo mide el caso con dependencias ya instaladas. Mitigación: Node 22 y Chromium ya vienen preinstalados en la sesión cloud, así que normalmente solo queda `pnpm install`.
+- **Descarga de Node en CI**: un fallo de red en nodejs.org rompe `arda-gate`. Si ocurre, se relanza una vez.
 - **Una sola conexión SQLite** con `opfs-sahpool`: el esqueleto solo avisa (CA-08). La coordinación real va en SPEC-0006/0008.
 - **Safari iOS**: no está probado. Hoy no aplica, porque el móvil principal es Android.
 - **Ruta base `/app/`**: si el repositorio cambia de nombre o se usa un dominio propio, cambia `base`.
