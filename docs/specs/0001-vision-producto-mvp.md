@@ -1,8 +1,8 @@
 ---
 id: SPEC-0001
 title: Visión de producto y MVP
-status: draft          # draft → approved (solo una persona) → implemented
-summary: Visión TO-BE de NÖM, alcance del MVP individual local-first con sincronización cifrada en GitHub, y fases posteriores
+status: approved          # draft → approved (solo una persona) → implemented
+summary: Visión TO-BE de Míre, alcance del MVP individual local-first con sincronización cifrada en GitHub, y fases posteriores
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [ADR-0001]       # IDs de specs y ADR relacionados
 ---
@@ -10,15 +10,16 @@ refs: [ADR-0001]       # IDs de specs y ADR relacionados
 # SPEC-0001 · Visión de producto y MVP
 
 ## Intención
-Fijar **qué es NÖM y qué hace su primera versión utilizable (MVP)**, para que las specs siguientes (stack, diseño, modelo de datos, seguridad y funcionalidades) partan de un alcance cerrado y acordado.
+Fijar **qué es Míre y qué hace su primera versión utilizable (MVP)**, para que las specs siguientes (stack, diseño, modelo de datos, seguridad y funcionalidades) partan de un alcance cerrado y acordado.
 
-**Visión.** NÖM — *Next Optimal Money* — es una aplicación de finanzas personales (y, más adelante, familiares) cuyo valor principal es la **vista global**: ver en un solo sitio todo el patrimonio y su evolución, a partir de datos introducidos a mano o importados de extractos, sin conexiones bancarias y con los datos bajo control exclusivo de su propietario.
+**Visión.** Míre (en quenya, «joya» o «valor preciado»; identidad completa en SPEC-0003) es una aplicación de finanzas personales (y, más adelante, familiares) cuyo valor principal es la **vista global**: ver en un solo sitio todo el patrimonio y su evolución, a partir de datos introducidos a mano o importados de extractos, sin conexiones bancarias y con los datos bajo control exclusivo de su propietario.
 
 **Problema que resuelve el MVP.** Hoy el propietario no tiene una visión consolidada de su patrimonio (cuentas en distintas entidades, efectivo e inversiones). El MVP debe dársela sin depender de otra herramienta.
 
 ## Contexto
 - `docs/project-context.md`: producto, marca, restricciones (Claude Pro, RGPD, sin PSD2) y backlog.
-- `ADR-0001` (`docs/decisions/0001-almacenamiento-local-first-github-cifrado.md`): estrategia de almacenamiento y sincronización. Debe aceptarse junto con esta spec.
+- `ADR-0001` (`docs/decisions/0001-almacenamiento-local-first-github-cifrado.md`): estrategia de almacenamiento y sincronización (accepted el 2026-10-24).
+- Renombrado NÖM → Míre (2026-10-24): esta spec volvió a draft solo para cambiar el nombre; el alcance no cambia. Identidad completa en SPEC-0003 y `docs/brand.md`.
 - Proyecto greenfield: no hay código ni specs previas. Stack sin decidir (lo decidirá SPEC-0002 con ADR-0002).
 - Requisitos recogidos con el propietario en la sesión de Analizar y Refinar del 2026-10-24.
 
@@ -59,7 +60,7 @@ Cambios documentales que acompañan a esta spec:
 
 ### Almacenamiento y sincronización (ver ADR-0001)
 - **Local-first**: la app trabaja contra una base de datos local en cada dispositivo y funciona **sin conexión**.
-- **Copia maestra** en un **repositorio privado de GitHub separado** del código (`nom-finance/app`). Nombre y propietario del repositorio: SPEC-0005.
+- **Copia maestra** en un **repositorio privado de GitHub separado** del código (`mire-app/start`). Nombre y propietario del repositorio: SPEC-0005.
 - Los datos se **cifran en el dispositivo** antes de salir de él (ver CA-12 para el alcance exacto).
 - Las credenciales e integraciones de GitHub que usa Claude Code **no deben tener permisos** sobre el repositorio de datos (se concreta y verifica en SPEC-0005).
 - **Varios dispositivos** (ordenador y móvil), cada uno con su copia local; los cambios se fusionan.
@@ -115,7 +116,7 @@ Criterios del MVP. CA-01 a CA-18 se verifican en la spec responsable (tabla «Tr
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
 18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0009 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
-19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa NÖM durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
+19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa Míre durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
