@@ -1,7 +1,7 @@
 ---
 id: SPEC-0008
 title: Motor de sincronización local-first cifrada
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Captura por campo y por grupos atómicos con triggers, reloj lógico híbrido, fusión «gana el último» en un ciclo transaccional con reparaciones deterministas y avisos, ficheros cifrados por dispositivo con la API Git (arranque con Contents), compactación, anillo remoto y planificación cada 5 min; sin pantallas
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0004, SPEC-0005, SPEC-0007, SPEC-0011, SPEC-0012, SPEC-0013, SPEC-0014, SPEC-0016, SPEC-0018, SPEC-0019, SPEC-0020, ADR-0001, ADR-0002, ADR-0005, ADR-0006]

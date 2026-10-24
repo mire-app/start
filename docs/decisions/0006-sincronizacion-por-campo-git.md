@@ -1,7 +1,7 @@
 ---
 id: ADR-0006
 title: Sincronización por campo con reloj híbrido sobre la API Git de GitHub
-status: proposed       # proposed → accepted (solo una persona) → superseded
+status: accepted       # proposed → accepted (solo una persona) → superseded
 summary: Registro de cambios por campo y por grupos atómicos capturado con triggers, fusión «gana el último» con reloj lógico híbrido en un ciclo transaccional con reparaciones deterministas, ficheros cifrados por dispositivo en el repositorio privado mediante la API Git (arranque con Contents) y compactación con instantáneas
 ---
 

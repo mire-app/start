@@ -1,7 +1,7 @@
 ---
 id: SPEC-0007
 title: Categorías: lista inicial, gestión, equivalencias del banco y recategorización
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Lista inicial de dos niveles basada en BBVA con iconos y equivalencias sembradas de forma idempotente, pantalla de categorías (crear, renombrar, icono, borrar moviendo movimientos), equivalencias editables con las categorías del banco y categorización múltiple en Movimientos
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0008, SPEC-0010, SPEC-0011, SPEC-0013, SPEC-0015, SPEC-0016, SPEC-0017, SPEC-0018, SPEC-0019]

@@ -1,7 +1,7 @@
 ---
 id: SPEC-0012
 title: Lector del PDF de cartera de MyInvestor y comprobación local de ficheros
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Lectura de la tabla «Posiciones» del extracto PDF de MyInvestor con pdf.js (un fondo por cuenta, grupo «Cartera MyInvestor», valoraciones con duplicados), y herramienta import:check que valida ficheros reales en local sin mostrar datos
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0004, SPEC-0010, SPEC-0011, SPEC-0019, ADR-0004]

@@ -1,7 +1,7 @@
 ---
 id: SPEC-0006
 title: Navegación, Inicio y cuentas
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Barras de navegación (inferior en móvil y superior en escritorio), Inicio con resumen de patrimonio, Cuentas con detalle, edición, grupos, inversiones, archivar y borrar vacías
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0007, SPEC-0009, SPEC-0011, SPEC-0016, SPEC-0020, ADR-0002]

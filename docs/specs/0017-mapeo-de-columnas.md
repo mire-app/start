@@ -1,7 +1,7 @@
 ---
 id: SPEC-0017
 title: Mapeo de columnas y plantillas para otros bancos
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Paso «Mapeo» en el asistente para CSV y .xlsx sin formato predefinido (fila de cabeceras, columnas, formato de fecha y decimales, vista previa), plantilla guardada al importar, reconocimiento automático y gestión de plantillas
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0010, SPEC-0011, SPEC-0012]

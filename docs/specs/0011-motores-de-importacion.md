@@ -1,7 +1,7 @@
 ---
 id: SPEC-0011
 title: Motores de importación xlsx y CSV
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Lectores BBVA (informe xlsx), MyInvestor movimientos (xlsx) y genérico CSV/xlsx con plantilla; plan con cuentas por clave de origen, duplicados, traspasos, categorías y apertura; commit, revert y comprobación de saldo; sin pantallas
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0004, SPEC-0010, SPEC-0012, SPEC-0017, ADR-0004]

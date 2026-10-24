@@ -1,7 +1,7 @@
 ---
 id: SPEC-0009
 title: Panel en Inicio: evolución del patrimonio, resumen del mes y reparto por tipo
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Inicio pasa a ser el panel: variación del patrimonio, gráfico de área de la evolución mensual (6 meses, 1 año, todo) en SVG propio accesible, resumen del mes con ingresos, gastos y ahorrado y barras por categoría que llevan a Movimientos, y reparto por tipo de cuenta desplegable
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0004, SPEC-0006, SPEC-0007, SPEC-0010, SPEC-0011, SPEC-0013, SPEC-0015, SPEC-0016, SPEC-0020, ADR-0002]

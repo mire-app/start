@@ -1,7 +1,7 @@
 ---
 id: SPEC-0016
 title: Rutas, Ajustes, Diagnóstico y datos de ejemplo
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Router con rutas hash, página Ajustes (idioma, tema, seguridad, datos, privacidad y Diagnóstico con la prueba de almacenamiento y db-version trasladadas), datos de ejemplo con la base vacía y traslado acotado de tests
 test_changes: allowed  # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0013, SPEC-0014, ADR-0002]

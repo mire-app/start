@@ -1,7 +1,7 @@
 ---
 id: ADR-0004
 title: Librerías de importación (ExcelJS, PapaParse, pdf.js) e identificadores UUIDv7
-status: proposed       # proposed → accepted (solo una persona) → superseded
+status: accepted       # proposed → accepted (solo una persona) → superseded
 summary: .xlsx con ExcelJS (sin .xls), CSV con PapaParse, PDF con pdfjs-dist, todo en el navegador y cargado bajo demanda; ids UUIDv7, importes en céntimos y huellas SHA-256 con WebCrypto
 ---
 

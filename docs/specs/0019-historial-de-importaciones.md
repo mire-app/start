@@ -1,7 +1,7 @@
 ---
 id: SPEC-0019
 title: Historial de importaciones y deshacer
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Lista de importaciones en la pantalla Importar con estado y botón Deshacer, explicando sus efectos y los bloqueos por importaciones posteriores
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0006, SPEC-0010, SPEC-0011, SPEC-0012, SPEC-0015, SPEC-0016, SPEC-0020]

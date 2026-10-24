@@ -1,7 +1,7 @@
 ---
 id: ADR-0005
 title: Criptografía y desbloqueo (AES-GCM, Argon2id, PIN con clave de dispositivo, código de recuperación)
-status: proposed       # proposed → accepted (solo una persona) → superseded
+status: accepted       # proposed → accepted (solo una persona) → superseded
 summary: Clave de datos aleatoria AES-GCM-256 envuelta con Argon2id(contraseña maestra) y con el código de recuperación; desbloqueo diario con PIN de 4 dígitos atado a una clave de dispositivo no extraíble; base local sin cifrar (riesgo aceptado)
 ---
 

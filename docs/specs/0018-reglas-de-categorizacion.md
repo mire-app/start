@@ -1,7 +1,7 @@
 ---
 id: SPEC-0018
 title: Reglas de categorización por concepto
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Reglas «el concepto contiene X → categoría Y» que sugieren categoría al importar (por encima de la del banco), creadas desde un movimiento o desde la pantalla de reglas, con vista previa para aplicarlas a lo ya importado
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0007, SPEC-0010, SPEC-0011, SPEC-0013, SPEC-0015, SPEC-0016]

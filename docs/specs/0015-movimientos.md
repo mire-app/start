@@ -1,7 +1,7 @@
 ---
 id: SPEC-0015
 title: Movimientos: lista, filtros, detalle, edición y traspasos
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Lista global de movimientos con filtros (cuenta, mes, tipo, categoría, texto), detalle con edición avisada de datos importados, borrado, vincular y desvincular traspasos y marcar aportación externa
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0007, SPEC-0009, SPEC-0010, SPEC-0011, SPEC-0016, SPEC-0018, ADR-0002]

@@ -1,7 +1,7 @@
 ---
 id: SPEC-0013
 title: Privacidad: exportación, borrado y aviso
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Exportación completa en .zip (JSON + CSV seguros para Excel), borrado de todos los datos del dispositivo con destrucción de la clave local, aviso de privacidad es/en y telemetría cero verificada
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0008, SPEC-0014, SPEC-0020, ADR-0005]

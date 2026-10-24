@@ -1,7 +1,7 @@
 ---
 id: SPEC-0005
 title: Seguridad: cifrado, claves y desbloqueo
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Núcleo criptográfico (DEK, anillo de claves, clave de dispositivo), configuración obligatoria (contraseña maestra, código de recuperación, PIN de 4 dígitos), desbloqueo, autobloqueo y token de GitHub cifrado
 test_changes: allowed  # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0004, SPEC-0008, SPEC-0020, ADR-0001, ADR-0005]

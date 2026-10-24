@@ -1,7 +1,7 @@
 ---
 id: SPEC-0010
 title: Asistente de importación (BBVA y MyInvestor)
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Pantalla Importar con asistente por pasos (fichero, cuentas, revisión con lo que requiere atención primero, resultado con comprobación de saldo) para BBVA y MyInvestor xlsx/PDF
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0007, SPEC-0011, SPEC-0012, SPEC-0014, SPEC-0015, SPEC-0016, SPEC-0017, SPEC-0018, SPEC-0019, ADR-0004]

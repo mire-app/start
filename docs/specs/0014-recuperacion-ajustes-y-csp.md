@@ -1,7 +1,7 @@
 ---
 id: SPEC-0014
 title: Seguridad: recuperación, ajustes, CSP y repositorio de datos
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Recuperación con el código, diálogo «Seguridad…» (cambiar PIN y contraseña, regenerar código, estado del token), CSP en todas las páginas, antienmarcado y guía para crear mire-datos en la cuenta personal sin acceso de Claude
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0005, SPEC-0008, SPEC-0020, ADR-0005]

@@ -1,7 +1,7 @@
 ---
 id: SPEC-0020
 title: Conexión con GitHub, vinculación de dispositivos y estado de la sincronización
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Asistente guiado sin servidor para crear el repositorio privado y el token con enlaces prerrellenados y comprobarlos, vinculación y renovación de token por QR con código y contraseña, indicador de estado, Ajustes › Sincronización y avisos (caducidad del token, repositorio borrado, conflictos, importación duplicada)
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0003, SPEC-0005, SPEC-0006, SPEC-0008, SPEC-0010, SPEC-0011, SPEC-0013, SPEC-0014, SPEC-0016, SPEC-0019, ADR-0005, ADR-0006]
