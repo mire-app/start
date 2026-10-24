@@ -162,7 +162,7 @@ API: `<Amount value={number} kind="income" | "expense" | "transfer" | "balance" 
   - curva: `cubic-bezier(.2,.7,.2,1)`.
 - **Deslizamiento direccional** entre pantallas principales: utilidad `navigate(direction: 'forward' | 'back', update: () => void)` en `src/design/motion.ts`.
   - Si hay `document.startViewTransition` y no se pide reducir movimiento, envuelve `update` en una View Transition.
-  - Las clases `vt-forward` y `vt-back` en `<html>` eligen la animación CSS. La pantalla nueva entra desde el lado hacia el que se navega (adelante = desde la derecha) y la anterior sale por el contrario con fundido, en `base`.
+  - Las clases `vt-forward` y `vt-back` en `<html>` eligen la animación CSS. Se ponen antes de llamar a `startViewTransition` y se retiran cuando termina (`transition.finished`). La pantalla nueva entra desde el lado hacia el que se navega (adelante = desde la derecha) y la anterior sale por el contrario con fundido, en `base`.
   - La barra superior tiene `view-transition-name: topbar` y queda fija; su título cambia con un fundido en `fast`.
   - Si se pide reducir movimiento, o no hay soporte, llama a `update` directamente, sin animación.
   - La usarán las specs con navegación (SPEC-0006).
@@ -211,7 +211,9 @@ Se importan con el alias `@/` → `src/`, configurado en `tsconfig` y en `vite.c
 - **Vitest**:
   - `include` pasa a `src/**/*.test.{ts,tsx}`;
   - los tests `.tsx` declaran `// @vitest-environment jsdom`; los `.ts` siguen en el entorno `node`.
-- **e2e nuevos** en `e2e/design/`, con un **presupuesto de 8 tests como máximo**.
+- **e2e nuevos** en `e2e/design/`, con un **presupuesto de 8 ficheros de test como máximo**. Las variantes parametrizadas (página × tema) cuentan dentro de su fichero. El límite real es el tiempo de CA-14.
+- **`tsconfig`** incluye los tipos `vite-plugin-svgr/client` para las importaciones `?react`.
+- **`tools/`** queda cubierto por ESLint, Prettier y `typecheck` (JS con `checkJs`).
 
 ## Fuera de alcance
 - Nombres de los módulos de la app (Core, Gems, Flow, Future Equity): se deciden en las specs de cada función, traducidos a cada idioma.
@@ -252,13 +254,13 @@ Se importan con el alias `@/` → `src/`, configurado en `tsconfig` y en `vite.c
    - `index.html` enlaza `favicon.svg` y `favicon-32.png`;
    - los SVG de `src/brand/` no contienen `<text>`.
 8. **CA-08** · e2e de movimiento en la demo de la guía de estilo, con un espía instalado con `page.addInitScript` que envuelve `document.startViewTransition` y cuenta las llamadas:
-   - con `reducedMotion: 'no-preference'`, pulsar «Siguiente» llama una vez a `startViewTransition` y añade `vt-forward` a `<html>`;
+   - con `reducedMotion: 'no-preference'`, pulsar «Siguiente» llama una vez a `startViewTransition`, y el espía registra que `<html>` tenía la clase `vt-forward` en el momento de la llamada;
    - con `reducedMotion: 'reduce'`, no la llama, y el panel cambia igualmente.
 9. **CA-09** · La pantalla de inicio y la guía de estilo no tienen scroll horizontal a 375 px (`scrollWidth <= clientWidth`). Cubre SPEC-0001 CA-16.
 10. **CA-10** · Los textos de la guía de estilo y de la pantalla de inicio existen en `es.json` y `en.json`; un test falla si una clave falta en un idioma.
 11. **CA-11** · Los botones de solo icono tienen `aria-label`, y los controles de `TopBar` y los selectores miden ≥ 44 × 44 px en el viewport móvil (e2e).
 12. **CA-12** · Los e2e de SPEC-0002 (CA-05 a CA-08 de esa spec) pasan **sin modificar ningún fichero** de `e2e/` creado por SPEC-0002.
-13. **CA-13** · `git grep -nE "NÖM|\bnom\b"` no encuentra nada en `src/`, `e2e/`, `public/`, `index.html`, `estilo.html`, `README.md`, `docs/brand.md` ni `docs/project-context.md`, salvo la línea histórica «Formerly NÖM» del contexto.
+13. **CA-13** · `git grep -nE "NÖM|\bnom\b"` no encuentra nada en `src/`, `e2e/`, `public/`, `index.html`, `estilo.html`, `README.md` ni `docs/brand.md`. En `docs/project-context.md` solo aparece en líneas que contienen «formerly» o «historical» (las referencias históricas al nombre y al repositorio anteriores): `git grep -nE "NÖM|\bnom\b" docs/project-context.md | grep -viE "formerly|historical"` no devuelve nada.
 14. **CA-14** · `.arda/checks.sh` completo sigue terminando en menos de 5 minutos en la sesión cloud (SPEC-0002 CA-09).
 15. **CA-15** · El propietario valida visualmente, en su Android, el logotipo, el icono instalado, el favicon y los dos temas.
 
