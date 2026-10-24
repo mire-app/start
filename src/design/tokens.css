@@ -1,0 +1,60 @@
+/*
+ * Colour tokens of Míre (SPEC-0003 §2), palette «Noche y esmeralda».
+ * Light theme on :root (Tailwind emits @theme on :root) and dark theme on [data-theme='dark'].
+ * Each token is a Tailwind utility colour: bg-surface, text-positive, border-border-input…
+ * Keep in sync with tokens.ts (checked by tokens.test.ts).
+ */
+@theme static {
+  --color-*: initial;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #0b132b;
+  --color-muted: #4a5570;
+  --color-line: #dde3ec;
+  --color-border-input: #7c879e;
+  --color-top: #0b132b;
+  --color-on-top: #f8fafc;
+  --color-brand: #0b132b;
+  --color-on-brand: #f8fafc;
+  --color-accent: #2b4c9b;
+  --color-positive: #047857;
+  --color-negative: #b4483c;
+  --color-gold: #7a5d10;
+  --color-gold-fill: #e5c158;
+  --color-emerald-fill: #10b981;
+  --color-focus: #047857;
+  --color-track: #e4e9f1;
+  --color-chart-1: #a7e8cf;
+  --color-chart-2: #7fddb9;
+  --color-chart-3: #4fcf9f;
+  --color-chart-4: #10b981;
+  --color-chart-5: #0e9f6e;
+  --color-chart-6: #047857;
+}
+
+[data-theme='dark'] {
+  --color-bg: #0b132b;
+  --color-surface: #131d3d;
+  --color-text: #e8ecf5;
+  --color-muted: #a3aeca;
+  --color-line: #253256;
+  --color-border-input: #6576a0;
+  --color-top: #131d3d;
+  --color-on-top: #e8ecf5;
+  --color-brand: #e8ecf5;
+  --color-on-brand: #0b132b;
+  --color-accent: #8da9f0;
+  --color-positive: #34d399;
+  --color-negative: #f29b8f;
+  --color-gold: #e5c158;
+  --color-gold-fill: #e5c158;
+  --color-emerald-fill: #10b981;
+  --color-focus: #34d399;
+  --color-track: #253256;
+  --color-chart-1: #14503f;
+  --color-chart-2: #176a52;
+  --color-chart-3: #1a8565;
+  --color-chart-4: #10b981;
+  --color-chart-5: #34d399;
+  --color-chart-6: #6ee7b7;
+}

@@ -1,11 +1,18 @@
 {
   "home": {
-    "title": "Home"
+    "title": "Home",
+    "preferences": "Preferences"
   },
   "language": {
     "label": "Language",
     "es": "Español",
     "en": "English"
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
   },
   "storage": {
     "title": "Local storage",
@@ -13,5 +20,126 @@
     "count": "Current value",
     "busy": "Míre is already open in another tab",
     "error": "The local database could not be opened"
+  },
+  "ui": {
+    "close": "Close",
+    "notifications": "Notifications",
+    "moreOptions": "More options"
+  },
+  "styleguide": {
+    "title": "Style guide",
+    "intro": "The Míre design system: colours, typography, logo, icons, components, amounts and motion.",
+    "colours": {
+      "title": "Colours",
+      "token": "Token",
+      "caption": "WCAG contrast computed against bg and surface; on-top against top and on-brand against brand."
+    },
+    "type": {
+      "title": "Typography",
+      "sample": "Wisdom for your personal wealth.",
+      "regular": "Regular",
+      "medium": "Medium",
+      "semibold": "Semibold",
+      "bold": "Bold",
+      "numbers": "Amounts and tables use tabular figures: 1,234.56."
+    },
+    "logo": {
+      "title": "Logo and app icons",
+      "light": "On a light background",
+      "dark": "On a dark background",
+      "onTop": "On the top bar",
+      "appIcon": "App icon",
+      "maskable": "Adaptive icon (Android)",
+      "favicon": "Favicon"
+    },
+    "icons": {
+      "title": "Icons",
+      "description": "Material Symbols Rounded, at 24 and 20 px, in the text colour."
+    },
+    "components": {
+      "title": "Components"
+    },
+    "buttons": {
+      "title": "Buttons",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "ghost": "Ghost",
+      "compact": "Compact",
+      "disabled": "Disabled"
+    },
+    "fields": {
+      "title": "Fields",
+      "concept": "Description",
+      "placeholder": "For example, rent",
+      "disabled": "Disabled field",
+      "rent": "Rent",
+      "accountType": "Account type",
+      "current": "Current account",
+      "savings": "Savings",
+      "investment": "Investment"
+    },
+    "switches": {
+      "title": "Switches",
+      "sync": "Sync automatically",
+      "hide": "Hide amounts",
+      "disabled": "Option not available"
+    },
+    "tabs": {
+      "title": "Tabs",
+      "month": "Month",
+      "year": "Year",
+      "all": "All",
+      "monthContent": "Summary of this month.",
+      "yearContent": "Summary of this year.",
+      "allContent": "The whole history."
+    },
+    "overlays": {
+      "title": "Dialogs, menus and notices",
+      "openDialog": "Open dialog",
+      "dialogTitle": "Undo import",
+      "dialogBody": "The 42 transactions from this file will be removed.",
+      "cancel": "Cancel",
+      "confirm": "Undo",
+      "edit": "Edit",
+      "delete": "Delete",
+      "info": "Information",
+      "tooltip": "Amounts are shown in euros.",
+      "showPositive": "Show success notice",
+      "showNegative": "Show error notice",
+      "toastPositiveTitle": "Import completed",
+      "toastPositiveBody": "42 transactions were added.",
+      "toastNegativeTitle": "The file could not be read",
+      "toastNegativeBody": "Check that it is a BBVA .xlsx file.",
+      "topBarHint": "The menu and the tooltip are on the top bar."
+    },
+    "content": {
+      "title": "Content",
+      "card": "Card",
+      "cardBody": "Cards are separated by a border, without shadow.",
+      "neutral": "Neutral",
+      "goal": "Savings goal",
+      "tableCaption": "Latest transactions",
+      "date": "Date",
+      "concept": "Description",
+      "amount": "Amount",
+      "salary": "Salary",
+      "groceries": "Supermarket",
+      "toSavings": "Transfer to savings"
+    },
+    "amounts": {
+      "title": "Amounts",
+      "income": "Income",
+      "expense": "Expense",
+      "transfer": "Transfer",
+      "balance": "Balance",
+      "negativeBalance": "Negative balance"
+    },
+    "motion": {
+      "title": "Motion",
+      "description": "Directional slide between screens. With reduced motion the change is instant.",
+      "panel": "Panel {{n}} of 2",
+      "next": "Next",
+      "previous": "Previous"
+    }
   }
 }

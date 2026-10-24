@@ -1,11 +1,18 @@
 {
   "home": {
-    "title": "Inicio"
+    "title": "Inicio",
+    "preferences": "Preferencias"
   },
   "language": {
     "label": "Idioma",
     "es": "Español",
     "en": "English"
+  },
+  "theme": {
+    "label": "Tema",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
   },
   "storage": {
     "title": "Almacenamiento local",
@@ -13,5 +20,126 @@
     "count": "Valor actual",
     "busy": "Míre ya está abierto en otra pestaña",
     "error": "No se ha podido abrir la base de datos local"
+  },
+  "ui": {
+    "close": "Cerrar",
+    "notifications": "Notificaciones",
+    "moreOptions": "Más opciones"
+  },
+  "styleguide": {
+    "title": "Guía de estilo",
+    "intro": "El sistema de diseño de Míre: colores, tipografía, logotipo, iconos, componentes, importes y movimiento.",
+    "colours": {
+      "title": "Colores",
+      "token": "Token",
+      "caption": "Contraste WCAG calculado con bg y surface; on-top con top y on-brand con brand."
+    },
+    "type": {
+      "title": "Tipografía",
+      "sample": "La sabiduría de cuidar lo tuyo.",
+      "regular": "Normal",
+      "medium": "Media",
+      "semibold": "Seminegrita",
+      "bold": "Negrita",
+      "numbers": "Los importes y las tablas usan cifras tabulares: 1.234,56 €."
+    },
+    "logo": {
+      "title": "Logotipo e iconos de la app",
+      "light": "Sobre fondo claro",
+      "dark": "Sobre fondo oscuro",
+      "onTop": "En la barra superior",
+      "appIcon": "Icono de la app",
+      "maskable": "Icono adaptable (Android)",
+      "favicon": "Favicon"
+    },
+    "icons": {
+      "title": "Iconos",
+      "description": "Material Symbols Rounded, a 24 y 20 px, en el color del texto."
+    },
+    "components": {
+      "title": "Componentes"
+    },
+    "buttons": {
+      "title": "Botones",
+      "primary": "Principal",
+      "secondary": "Secundario",
+      "ghost": "Discreto",
+      "compact": "Compacto",
+      "disabled": "Deshabilitado"
+    },
+    "fields": {
+      "title": "Campos",
+      "concept": "Concepto",
+      "placeholder": "Por ejemplo, alquiler",
+      "disabled": "Campo deshabilitado",
+      "rent": "Alquiler",
+      "accountType": "Tipo de cuenta",
+      "current": "Cuenta corriente",
+      "savings": "Ahorro",
+      "investment": "Inversión"
+    },
+    "switches": {
+      "title": "Interruptores",
+      "sync": "Sincronizar automáticamente",
+      "hide": "Ocultar importes",
+      "disabled": "Opción no disponible"
+    },
+    "tabs": {
+      "title": "Pestañas",
+      "month": "Mes",
+      "year": "Año",
+      "all": "Todo",
+      "monthContent": "Resumen de este mes.",
+      "yearContent": "Resumen de este año.",
+      "allContent": "Todo el historial."
+    },
+    "overlays": {
+      "title": "Diálogos, menús y avisos",
+      "openDialog": "Abrir diálogo",
+      "dialogTitle": "Deshacer importación",
+      "dialogBody": "Se quitarán los 42 movimientos de este fichero.",
+      "cancel": "Cancelar",
+      "confirm": "Deshacer",
+      "edit": "Editar",
+      "delete": "Borrar",
+      "info": "Información",
+      "tooltip": "Los importes se muestran en euros.",
+      "showPositive": "Mostrar aviso de éxito",
+      "showNegative": "Mostrar aviso de error",
+      "toastPositiveTitle": "Importación completada",
+      "toastPositiveBody": "Se han añadido 42 movimientos.",
+      "toastNegativeTitle": "No se ha podido leer el fichero",
+      "toastNegativeBody": "Comprueba que es un .xlsx de BBVA.",
+      "topBarHint": "El menú y la ayuda emergente están en la barra superior."
+    },
+    "content": {
+      "title": "Contenido",
+      "card": "Tarjeta",
+      "cardBody": "Las tarjetas se separan con un borde, sin sombra.",
+      "neutral": "Neutro",
+      "goal": "Meta de ahorro",
+      "tableCaption": "Últimos movimientos",
+      "date": "Fecha",
+      "concept": "Concepto",
+      "amount": "Importe",
+      "salary": "Nómina",
+      "groceries": "Supermercado",
+      "toSavings": "Traspaso a ahorro"
+    },
+    "amounts": {
+      "title": "Importes",
+      "income": "Ingreso",
+      "expense": "Gasto",
+      "transfer": "Traspaso",
+      "balance": "Saldo",
+      "negativeBalance": "Saldo negativo"
+    },
+    "motion": {
+      "title": "Movimiento",
+      "description": "Deslizamiento direccional entre pantallas. Con «reducir movimiento» el cambio es inmediato.",
+      "panel": "Panel {{n}} de 2",
+      "next": "Siguiente",
+      "previous": "Anterior"
+    }
   }
 }

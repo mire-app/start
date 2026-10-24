@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* Typography, shape and elevation (SPEC-0003 §4 and §5). Spacing keeps Tailwind's 4 px grid. */
+@theme {
+  --font-sans: 'Sora', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --text-*: initial;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 1.2;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 2.5rem;
+  --text-3xl--line-height: 1.2;
+
+  --radius-*: initial;
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+
+  --shadow-*: initial;
+  --shadow-overlay: 0 8px 24px rgb(11 19 43 / 0.18);
+
+  --ease-mire: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Motion tokens (SPEC-0003 §8): same values as src/design/motion.ts. */
+:root {
+  --motion-fast: 150ms;
+  --motion-base: 250ms;
+  --motion-slow: 350ms;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-bg);
+    font-size: var(--text-base);
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    line-height: 1.2;
+  }
+
+  a {
+    color: var(--color-accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+/* Hover states (SPEC-0003 §2): the token mixed 88 % with its on-token or the background. */
+@utility hover-brand {
+  &:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--color-brand) 88%, var(--color-on-brand));
+  }
+}
+
+@utility hover-accent {
+  &:hover:not(:disabled) {
+    color: color-mix(in srgb, var(--color-accent) 88%, var(--color-bg));
+    border-color: color-mix(in srgb, var(--color-accent) 88%, var(--color-bg));
+  }
+}
+
+/* Directional slide between main screens (SPEC-0003 §8): forward enters from the right. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--motion-base);
+  animation-timing-function: var(--motion-ease);
+  animation-fill-mode: both;
+}
+
+html.vt-forward::view-transition-old(root) {
+  animation-name: mire-out-to-left;
+}
+
+html.vt-forward::view-transition-new(root) {
+  animation-name: mire-in-from-right;
+}
+
+html.vt-back::view-transition-old(root) {
+  animation-name: mire-out-to-right;
+}
+
+html.vt-back::view-transition-new(root) {
+  animation-name: mire-in-from-left;
+}
+
+::view-transition-group(topbar),
+::view-transition-old(topbar),
+::view-transition-new(topbar) {
+  animation-duration: var(--motion-fast);
+  animation-timing-function: var(--motion-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+@keyframes mire-in-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+
+@keyframes mire-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+}
+
+@keyframes mire-out-to-left {
+  to {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+}
+
+@keyframes mire-out-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
