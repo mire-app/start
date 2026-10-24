@@ -193,7 +193,11 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 **Agrupación y orden**:
 - se juntan las entradas de todos los ficheros del ciclo (la instantánea primero) por tabla, fila y grupo, y en cada grupo se queda la de mayor HLC;
 - se recorren las tablas en el orden de `SYNC_TABLE_ORDER`;
-- **dentro de cada tabla, primero las filas cuyo `deleted_at` pasa a no nulo**, porque liberan claves `UNIQUE` (p. ej. la valoración reemplazada de SPEC-0012, o una regla borrada y vuelta a crear), y después el resto, por `id`.
+- **dentro de cada tabla, en tres fases**:
+  1. las filas cuyo `deleted_at` pasa a no nulo, porque liberan claves `UNIQUE` (p. ej. la valoración reemplazada de SPEC-0012, o una regla borrada y vuelta a crear);
+  2. las actualizaciones de filas existentes, que también pueden liberar claves (renombrar «X» a «Z»);
+  3. las altas.
+  - Dentro de cada fase, por `id`.
 
 **Por fila**:
 - **Identificadores**: `t` y `f` solo se aceptan si están en `SYNCED_TABLES`; si no, `sync_corrupt`. Los valores van siempre como **parámetros**, nunca interpolados.
@@ -201,10 +205,14 @@ Esta spec es el **motor**, sin pantallas. La conexión, la vinculación y el est
 - **Fila que existe**: cada grupo remoto se aplica si su HLC es mayor que el reloj local del grupo (punto 4). Todos los grupos de la fila se escriben en **una** sentencia `UPDATE`, y se actualiza `sync_clock`.
 - **Reloj**: `receive` avanza con el mayor HLC recibido.
 
-**`UNIQUE`**: si una fila choca con otra viva por un índice `UNIQUE`:
-1. se pospone al final de su tabla y se reintenta una vez, por si otra fila del ciclo cambia esa clave (intercambio de claves);
-2. si sigue chocando, gana la de menor `created_at` (en empate, menor `id`), y la perdedora recibe `deleted_at` antes de aplicar.
-- Solo se resuelven así las colisiones que **siguen existiendo tras aplicar los borrados del ciclo**, y el resultado no depende del orden de llegada.
+**`UNIQUE`**, cuando una escritura choca con otra fila viva:
+1. **Se pospone** al final de su fase.
+2. Al terminar la fase, las filas pospuestas se aplican **a la vez**:
+   - primero se ponen sus columnas clave a un marcador temporal único (`'\u0000sync:' || id`);
+   - después se escriben sus valores finales.
+   Así se resuelven los intercambios de claves entre filas del mismo ciclo.
+3. **Si alguna sigue chocando** con el estado final de la tabla, gana la de menor `created_at` (en empate, menor `id`), y la perdedora recibe `deleted_at`.
+- Solo se resuelven así las colisiones que siguen existiendo **en el estado final** del ciclo. El resultado no depende del orden de llegada.
 
 **Reparaciones deterministas**, tras aplicar todo y dentro de la misma transacción, con `mode = 'local'` y repetidas hasta que no haya cambios (como máximo 5 pasadas):
 1. **`UNIQUE`**: las perdedoras del paso anterior quedan borradas como cambio local. Aviso `unique_resolved { table, keptId, removedId }`.
@@ -242,8 +250,9 @@ Las reparaciones generan los mismos valores en todos los dispositivos. Aunque ca
   2. hace el arranque con la API Contents si no hay commits (con `format.json`);
   3. hace un commit con `keyring.json` y una instantánea de todo (dos commits en total si no había ninguno, ambos `mire sync`).
   - Si falla tras el arranque, el repositorio queda `empty` (solo `format.json`), y un nuevo `initRemote` lo reanuda.
+  - **Si no llegó a subirse el commit con la instantánea**, la captura se desactiva otra vez (`enabled = 0`) y la cola se vacía. El estado vuelve a `off`.
   - Si el repositorio no es `empty`, da `remote_not_empty`.
-  - Vale también para empezar en un repositorio **nuevo** después de `remote_missing`, con los datos locales que haya.
+  - Vale también para empezar en un repositorio **nuevo** después de `remote_missing`, con los datos locales que haya. Antes se reinician `repo`, `headSha`, `keyringSha` y `sync_applied` del repositorio anterior; `nextSeq` sigue avanzando.
 - **`sync.joinRemote(repo, token)`**:
   - descarga la instantánea y los `ops/**` y activa la captura;
   - exige un dispositivo **sin datos**: ninguna fila viva en `SYNCED_TABLES`, salvo las filas sembradas sin cambios (con `created_at = updated_at` igual a la marca fija de SPEC-0007); si no, da `local_not_empty`;
@@ -312,7 +321,8 @@ Todos son tests de Vitest:
 5. **CA-05** · `UNIQUE`:
    - A y B crean una regla «CAFETERIA» (SPEC-0018) sin sincronizar. Tras fusionar, en las dos queda viva la de menor `created_at`, la otra queda borrada, y hay **un solo** aviso `unique_resolved` aunque se repitan los ciclos;
    - **borrado y alta con la misma clave**: A reemplaza una valoración (SPEC-0012) y borra y vuelve a crear la regla «SUPER». B recibe esos cambios con el alta antes que el borrado y con el orden contrario. En los dos casos queda viva la nueva, borrada la vieja, y no hay aviso;
-   - **intercambio**: A cambia la regla «X» a «Y» y la «Y» a «X» en una llamada. B las aplica sin aviso y con el intercambio hecho.
+   - **intercambio**: A cambia la regla «X» a «Y» y la «Y» a «X» en una llamada (el test usa un valor temporal en A, porque SQLite comprueba `UNIQUE` fila a fila). B las aplica sin aviso y con el intercambio hecho;
+   - **renombrar y reutilizar**: A renombra la regla «X» a «Z» y crea otra «X» con un `id` menor que el de la primera. B queda con las dos vivas y sin aviso.
 6. **CA-06** · Invariantes:
    - **grupo de campos**: A hace `linkTransfer` sobre un movimiento y B, sin sincronizar y con un HLC posterior, hace `setKind('external')` sobre ese mismo movimiento. Tras fusionar, el movimiento es `external` sin grupo, su antigua pareja se desvincula y hay un aviso `transfer_unlinked`;
    - **traspaso huérfano**: B desvincula el traspaso de 500 € y vincula su lado de «Diario» con un movimiento sintético M3 (+500, en otra cuenta); A, con un HLC posterior, desvincula el traspaso original. Tras fusionar, M3 queda `regular`;
@@ -348,6 +358,7 @@ Todos son tests de Vitest:
     - `initRemote` sobre un repositorio sin commits (409) hace el arranque con Contents y deja `format.json`, `keyring.json` y la instantánea;
     - con un fallo del segundo commit, `inspectRemote` da `empty`, y un nuevo `initRemote` termina el trabajo;
     - un movimiento escrito durante `initRemote` llega a otra base que se une después;
+    - con un 403 en el primer commit, el estado vuelve a `off` y la cola queda vacía;
     - un árbol `truncated` se recorre por directorios;
     - los errores 401, 403, 404, 429 y 5xx dan sus códigos.
 13. **CA-13** · Planificación (temporizadores simulados):

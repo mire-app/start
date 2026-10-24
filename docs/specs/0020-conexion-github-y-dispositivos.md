@@ -224,6 +224,8 @@ Antes de borrar se llama a `sync.stop()`.
    - con el simulado devolviendo 401 aparece «El token de GitHub no es válido o ha caducado», y «Renovar» con un token correcto lo quita;
    - con dos dispositivos conectados al mismo repositorio, tras renovar en A, el enlace de «Vincular dispositivo» de A abierto en B muestra «Actualizar el token de este dispositivo», y tras aceptar, B sincroniza con el token nuevo;
    - con el repositorio borrado en el simulado aparece «No encuentro tu repositorio de datos…», y «Desconectar y seguir solo aquí» oculta el indicador sin borrar datos;
+   - en otro contexto con el mismo aviso, «Conectar con un repositorio nuevo» con un repositorio simulado nuevo y vacío sube los datos locales, y el indicador pasa a «Sincronizado»;
+   - un enlace de vinculación abierto en un dispositivo bloqueado muestra primero el PIN, y tras desbloquear, «Actualizar el token de este dispositivo»;
    - con la sincronización conectada, el diálogo de borrado muestra el enlace a los ajustes del repositorio.
 8. **CA-08** · Repositorio con otros datos (e2e, en otro contexto tras CA-01):
    - un dispositivo con los datos de ejemplo (SPEC-0016) que conecta con el repositorio de CA-01 ve «Este dispositivo ya tiene datos…»;
