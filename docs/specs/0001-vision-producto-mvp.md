@@ -109,7 +109,7 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0018 | Reglas «el concepto contiene X → categoría Y» | CA-08 (reglas) |
 | SPEC-0008 + ADR-0006 | Motor de sincronización: captura por campo, fusión, cifrado y transporte (sin pantallas) | CA-12, CA-13 (lógica) |
 | SPEC-0020 | Conexión con GitHub, vinculación de dispositivos y estado de la sincronización | CA-11, CA-13 (de extremo a extremo), CA-14 (comprobación del propietario), CA-16 |
-| SPEC-0009 | Panel | CA-09, CA-10 |
+| SPEC-0009 | Panel en Inicio: evolución del patrimonio, resumen del mes y reparto por tipo | CA-09 (evolución mensual y reparto por tipo), CA-10, CA-16 |
 | SPEC-0010 | Asistente de importación para BBVA y MyInvestor (pantallas) | CA-04, CA-05, CA-07, CA-20, CA-21 (comprobación de saldo, de extremo a extremo), CA-11 (importar sin conexión), CA-16 |
 | SPEC-0019 | Historial de importaciones y deshacer (pantallas) | CA-21 (deshacer, de extremo a extremo), CA-16 |
 | SPEC-0017 | Mapeo de columnas y plantillas para otros bancos (pantallas) | CA-06 (de extremo a extremo), CA-16 |

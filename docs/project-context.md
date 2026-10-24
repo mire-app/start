@@ -46,4 +46,4 @@
 17. SPEC-0018 — Rules ("description contains X → category Y").
 18. SPEC-0008 — Sync engine: per-field LWW with HLC, encrypted files via Git API (with ADR-0006). No UI.
 19. SPEC-0020 — GitHub connection wizard, device pairing by QR, sync status and notices.
-20. SPEC-0009 — Dashboard.
+20. SPEC-0009 — Dashboard in Home: net worth evolution (SVG area chart), monthly summary by category, breakdown by type.

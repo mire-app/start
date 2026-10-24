@@ -50,7 +50,7 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
   | Categoría | todas, sin categoría, o una (una categoría con subcategorías incluye los movimientos de estas) |
   | Texto | busca en el concepto y la nota, sin distinguir mayúsculas ni tildes (`normalizeText`) |
 
-  - Los filtros se reflejan en la URL (`#/movimientos?cuenta=…&mes=…&tipo=…&categoria=…&q=…`), de modo que «Ver todos» desde una cuenta (SPEC-0006) llega ya filtrado.
+  - Los filtros se reflejan en la URL (`#/movimientos?cuenta=…&mes=…&tipo=…&categoria=…&q=…`), de modo que «Ver todos» desde una cuenta (SPEC-0006) llega ya filtrado. Valores: `cuenta=<id>`, `mes=AAAA-MM`, `tipo=ingreso|gasto|traspaso|aportacion`, `categoria=<id>|sin` y `q=<texto>`. SPEC-0009 enlaza aquí con estos valores.
   - **Contador**: «N movimientos», con la suma de ingresos y la de gastos del resultado filtrado. Los traspasos y aportaciones no cuentan (`countsAsIncomeOrExpense`).
 - **Estado vacío**:
   - sin datos: «Aún no hay movimientos. Importa un extracto.», con botón a `#/importar`;
