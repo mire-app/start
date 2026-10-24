@@ -94,9 +94,10 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
 - **Contrato estable**, en el que se apoyan los tests de esta spec y de SPEC-0010:
   - rol `combobox`, con el nombre accesible que recibe (por defecto «Categoría» / «Category»);
   - el valor elegido se muestra como texto visible: «Categoría › Subcategoría», «Categoría» o «Sin categoría»;
-  - `onChange(categoryId | null)`.
+  - `onChange(categoryId | null)`;
+  - props opcionales `exclude?: string[]` (ids que no se ofrecen) y `allowNone?: boolean` (por defecto `true`; con `false` no aparece «Sin categoría»). Las specs siguientes pueden añadir props opcionales sin cambiar este contrato.
 - **Nombre visible**: la función `categoryLabel(category)` devuelve `name`. SPEC-0007 la amplía con las traducciones de la lista inicial, sin cambiar el contrato.
-- **Datos**: `categories.list` (API del worker; SPEC-0010 lo amplía si hace falta).
+- **Datos**: `categories.list` (método nuevo de la API del worker, creado por esta spec) → `{ id, parentId, systemKey, name, icon }[]`, solo las vivas. SPEC-0010 lo usa tal cual y SPEC-0007 añade `movementCount`.
 
 ## Fuera de alcance
 - **Alta manual** de movimientos: descartada (solo importación).

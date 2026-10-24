@@ -38,7 +38,7 @@ Las reglas por concepto son de SPEC-0018.
 - `SPEC-0015`:
   - lista con filtro de categoría (una categoría incluye sus subcategorías) y `listMovements`;
   - **`CategoryPicker`** y `categoryLabel`, cuyo contrato esta spec no cambia.
-- `SPEC-0010`: revisión de la importación y `categories.list`; test de paridad `src/i18n/keys.test.ts`.
+- `SPEC-0010`: revisión de la importación; test de paridad `src/i18n/keys.test.ts`.
 - `SPEC-0005`: `SecurityGate` y desbloqueo. `SPEC-0013`: borrado total y exportación (`categorias.csv`). `SPEC-0016`: router, regla de transiciones y Ajustes. `SPEC-0006`: barra inferior.
 - **Decisiones del propietario** (2026-10-24):
   - lista inicial basada en la de BBVA;
@@ -85,6 +85,7 @@ Las reglas por concepto son de SPEC-0018.
 ### 2. Siembra (`categories.seedDefaults`)
 - **Qué hace**: inserta la lista y sus equivalencias en una transacción, **solo si la tabla `category` no tiene ninguna fila** (tampoco borradas). Si tiene alguna, no hace nada.
 - **Cuándo**: en **cada desbloqueo**. `SecurityGate` espera a que termine **antes** de mostrar la app.
+  - Si falla (por ejemplo, la base está bloqueada por otra pestaña, SPEC-0002), la app se muestra igualmente y se vuelve a intentar en el siguiente desbloqueo.
   - Así cubre las instalaciones ya configuradas y el borrado total con nueva configuración (SPEC-0013).
   - La comprobación es una consulta `SELECT 1 FROM category LIMIT 1`.
 - **Sin migración nueva**: `db-version` sigue siendo 1. Los tests en Node que usan `migrate` no ven la lista.
@@ -127,7 +128,7 @@ Las reglas por concepto son de SPEC-0018.
   Uno fuera de la lista da `invalid_icon`.
 - **Borrar** (borrado lógico):
   - **diálogo**: «¿Borrar «X»?». Si tiene subcategorías: «También se borrarán sus N subcategorías»;
-  - **si tiene movimientos** (contando sus subcategorías): «Tiene M movimientos», con **«Moverlos a»** (`CategoryPicker`, por defecto) o **«Dejarlos sin categoría»**;
+  - **si tiene movimientos** (contando sus subcategorías): «Tiene M movimientos», con **«Moverlos a»** (`CategoryPicker` con `exclude` = la categoría y sus subcategorías y `allowNone: false`; opción por defecto) o **«Dejarlos sin categoría»**;
   - **destino**: no puede ser la categoría que se borra ni una de sus subcategorías; si lo es, el error es `category_move_target_invalid`;
   - **al confirmar**, en una transacción:
     1. los movimientos pasan al destino o a NULL;
@@ -164,7 +165,7 @@ Las reglas por concepto son de SPEC-0018.
 ### 7. API del worker y repositorios (`src/db/repo/categories.ts`)
 **Categorías**:
 - `categories.seedDefaults()`.
-- `categories.list()` → `{ id, parentId, systemKey, name, icon, movementCount }[]`, solo las vivas. Amplía el de SPEC-0010.
+- `categories.list()` → `{ id, parentId, systemKey, name, icon, movementCount }[]`, solo las vivas. Añade `movementCount` al de SPEC-0015.
 - `categories.create({ parentId?, name, icon? })` y `categories.update(id, { name?, icon? })`. Errores: `category_name_taken`, `category_name_empty`, `invalid_icon` y `category_depth`.
 - `categories.delete(id, { moveTo: string | null })`. Error: `category_move_target_invalid`.
 
@@ -214,7 +215,7 @@ Las reglas por concepto son de SPEC-0018.
    - a 375 px, `#/ajustes/categorias` no muestra la barra inferior;
    - con el espía de SPEC-0003, ir desde Ajustes usa `vt-forward`, y «atrás» usa `vt-back`.
 5. **CA-05** · Categorización múltiple (e2e, a continuación de CA-03):
-   - con el filtro «Sin categoría», seleccionar «TRANSFERENCIA A MYINVESTOR» y «TRANSFERENCIA A MYINVESTOR B» y categorizarlos como «Otros gastos › Gastos varios» muestra «2 movimientos categorizados», y el filtro «Sin categoría» queda en 2;
+   - con el filtro «Sin categoría», seleccionar «TRANSFERENCIA A MYINVESTOR» y «TRANSFERENCIA A MYINVESTOR B» (localizadas por texto exacto) y categorizarlos como «Otros gastos › Gastos varios» muestra «2 movimientos categorizados», y el filtro «Sin categoría» queda en 2;
    - «Deshacer» lo devuelve a 4.
 6. **CA-06** · Equivalencias (e2e, a continuación):
    - «Categorías del banco» muestra `No categorizable›No asociable a gasto o ingreso` con 3 movimientos, 3 sin categoría y «Sin categoría»;

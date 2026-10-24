@@ -18,14 +18,13 @@ Que los movimientos repetidos (supermercado, gasolinera, suscripciones) **se cat
 - `SPEC-0001` (draft): CA-08 (reglas).
 - `SPEC-0004`: tabla `category_rule` (`pattern`, `pattern_norm`, `category_id`, con `UNIQUE(pattern_norm)` parcial) y `normalizeText`.
 - `SPEC-0011`: gancho `suggestCategory(row)`, con prioridad sobre `category_map`, y los campos `suggestedBy = 'rule'` y `suggestedRule: { id, pattern }` de la fila del plan.
-- `SPEC-0015`: `CategoryPicker`.
 - `SPEC-0007`:
   - pantalla `#/ajustes/categorias` (sección 4, nivel 2);
   - diálogo de borrado de categorías;
   - `movements.setCategory` y `restoreCategories`;
   - siembra, con la equivalencia BBVA `Compras›Alimentación`.
   - **Se implementa antes.**
-- `SPEC-0015`: detalle del movimiento y lista con filtros.
+- `SPEC-0015`: detalle del movimiento, lista con filtros y `CategoryPicker` (con `allowNone: false`).
 - `SPEC-0010`: revisión de la importación, con la nota «Por la regla «X»» cuando hay `suggestedRule`.
 - `SPEC-0016`: router y regla de transiciones.
 - Fichero `bbva-informe-parcial.xlsx` (SPEC-0011): fila 4 «SUPERMERCADO EJEMPLO», con la categoría del banco `Compras›Alimentación`.
@@ -108,7 +107,7 @@ Que los movimientos repetidos (supermercado, gasolinera, suscripciones) **se cat
 ## Criterios de aceptación
 Los e2e parten de la seguridad configurada, sin datos y con la siembra de SPEC-0007. Como máximo hay 2 ficheros e2e:
 - `reglas.spec.ts`: CA-02, CA-03 y CA-04, encadenados;
-- `reglas-a11y.spec.ts`: CA-09. Importa antes `bbva-informe.xlsx` y crea la regla «CAFETERIA» para tener la vista previa con datos.
+- `reglas-a11y.spec.ts`: CA-09. Importa antes `bbva-informe.xlsx` y crea la regla «CAFETERIA» (vista previa con datos); después crea «SUPERMERCADO» e importa `bbva-informe-parcial.xlsx` (nota de la revisión).
 
 1. **CA-01** · `matchRule` (Vitest):
    - «SUPERMERCADO» coincide con «Compra Supermercado Ejemplo» (mayúsculas y tildes normalizadas);
@@ -133,9 +132,9 @@ Los e2e parten de la seguridad configurada, sin datos y con la siembra de SPEC-0
    - `rules.preview` excluye traspasos y los que ya tienen la categoría;
    - `matchCount` cuenta los movimientos vivos que coinciden, sin traspasos;
    - `rules.apply` con 120 coincidencias sintéticas (80 sin categoría):
-     - `defaults` con 2 `exclude` aplica 78;
+     - `defaults` con 2 `exclude` de filas sin categoría aplica 78;
      - `all` aplica 120;
-     - `none` con 1 `include` aplica 1;
+     - `none` con 1 `include` aplica 1, y con `include` vacío aplica 0 (la interfaz deshabilita «Aplicar a 0»);
      - `restoreCategories` deja todo como estaba.
 6. **CA-06** · Borrado de categoría con reglas (Vitest, Node): al borrar una categoría con 1 regla, con «Moverlos a» la regla pasa al destino y con «Dejarlos sin categoría» se borra.
 7. **CA-07** · Aviso tras editar (Vitest de componente): cambiar la categoría en el diálogo de edición de un movimiento muestra «¿Crear una regla para movimientos parecidos?»; sin cambiarla, o cambiándola a «Sin categoría», no aparece.
