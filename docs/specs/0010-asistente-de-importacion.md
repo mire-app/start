@@ -2,9 +2,9 @@
 id: SPEC-0010
 title: Asistente de importación (BBVA y MyInvestor)
 status: draft          # draft → approved (solo una persona) → implemented
-summary: Pantalla Importar con asistente por pasos (fichero, cuentas, revisión con lo que requiere atención primero, resultado con comprobación de saldo) para BBVA y MyInvestor xlsx/PDF, e historial de importaciones con deshacer
+summary: Pantalla Importar con asistente por pasos (fichero, cuentas, revisión con lo que requiere atención primero, resultado con comprobación de saldo) para BBVA y MyInvestor xlsx/PDF
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0011, SPEC-0012, SPEC-0014, SPEC-0015, SPEC-0016, SPEC-0006, ADR-0004]
+refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0011, SPEC-0012, SPEC-0014, SPEC-0015, SPEC-0016, ADR-0004]
 ---
 
 # SPEC-0010 · Asistente de importación (BBVA y MyInvestor)
@@ -12,155 +12,157 @@ refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0011, SPEC-0012, SPEC-0014, SPEC-00
 ## Intención
 Que el propietario meta sus datos reales en Míre importando sus extractos de **BBVA** y **MyInvestor** (`.xlsx` y PDF):
 - un asistente guiado;
-- **revisar** solo lo que requiere decisión (duplicados y traspasos);
-- **comprobar que el saldo cuadra**;
-- **deshacer** cualquier importación.
+- **revisar** solo lo que requiere decisión (duplicados, traspasos y aperturas);
+- **comprobar que el saldo cuadra**.
 
-Es la primera spec con la que Míre se puede usar de verdad. El mapeo de columnas para otros bancos va en SPEC-0017.
+El historial y «Deshacer» van en SPEC-0019; el mapeo de columnas para otros bancos, en SPEC-0017.
 
 ## Contexto
 - `SPEC-0001` (draft): función 4, CA-04, CA-05, CA-07, CA-20 y CA-21, de extremo a extremo.
-- `SPEC-0011` y `SPEC-0012`: motores (`read`, `resolve`, `commit` y `revert` en el worker; `ParsedFile.accounts`; plan con duplicados, traspasos, categoría, apertura y valoraciones; errores `xls_not_supported`, `unreadable_file`, `unknown_format` y `pdf_layout_unknown`; `nothing_to_import`, `revert_blocked_by_later_batch` y `already_reverted`) y sus ficheros sintéticos (`src/import/__fixtures__/`).
-- `SPEC-0004`: `recordBalanceCheck` y dominio. `SPEC-0016`: router y datos de ejemplo. `SPEC-0006`: navegación, marcador de `#/importar` (esta spec lo sustituye) y cuentas archivadas. `SPEC-0015`: lista de movimientos (destino de «Ver movimientos»).
-- `SPEC-0014`: CSP. **La meta CSP no gobierna los workers**, y la lectura se hace en el worker de la base de datos (ADR-0004).
-- **Spike del 2026-10-24** (descartado): ExcelJS 4.4.0 y pdf.js 6.4.299 (build `legacy`, `isEvalSupported: false`) leen un `.xlsx` y un PDF **dentro de un Web Worker de módulo** en Chromium, servido con una CSP estricta en cabecera (sin `unsafe-eval`), sin infracciones. Queda despejado el riesgo de ADR-0004.
+- `SPEC-0011` y `SPEC-0012`: motores, con estos contratos:
+  - funciones `read`, `resolve` y `commit` en el worker;
+  - tipos `ParsedFile`, `ImportPlan`, `ValuationPlan` y `Decisions`;
+  - resultado de `commit`;
+  - errores: `xls_not_supported`, `unreadable_file`, `unknown_format`, `pdf_layout_unknown`, `nothing_to_import`, `external_requires_positive`, `external_conflicts_transfer`, `valuation_date_required`, `account_type_mismatch` y `account_assigned_twice`;
+  - ficheros sintéticos en `src/import/__fixtures__/`.
+- `SPEC-0004`: `recordBalanceCheck`. `SPEC-0016`: router y datos de ejemplo. `SPEC-0006`: navegación, marcador de `#/importar` (esta spec lo sustituye) y repositorios de cuentas. `SPEC-0015`: lista de movimientos y su contador. `SPEC-0005`: autobloqueo.
+- `SPEC-0014`: CSP. La meta CSP no gobierna los workers, y la lectura se hace en el worker de la base de datos (ADR-0004).
+- **Spike del 2026-10-24** (descartado): ExcelJS 4.4.0 y pdf.js 6.4.299 (`legacy`, `isEvalSupported: false`) leen `.xlsx` y PDF dentro de un Web Worker de módulo en Chromium con una CSP estricta en cabecera (sin `unsafe-eval`), sin infracciones.
 - **Decisiones del propietario** (2026-10-24):
   - asistente por pasos, un fichero cada vez;
-  - revisión con «primero lo que requiere atención»;
+  - «primero lo que requiere atención»;
   - selector de archivos (más arrastrar y soltar en el ordenador);
-  - historial con «Deshacer» en Importar (por defecto, sin preferencia del propietario);
-  - mapeo genérico en SPEC-0017;
-  - traspasos sugeridos que el usuario confirma.
+  - traspasos sugeridos que el usuario confirma;
+  - historial en SPEC-0019 y mapeo en SPEC-0017.
 
 ## Cambio (delta)
 ### 1. Pantalla Importar (`#/importar`)
 - **Selección de fichero**:
-  - botón **«Elegir fichero» / «Choose file»** (`<input type="file" accept=".xlsx,.csv,.pdf,.xls">`, etiquetado);
-  - zona de **arrastrar y soltar** en el ordenador;
-  - texto de ayuda: «BBVA: informe de movimientos (.xlsx). MyInvestor: movimientos (.xlsx) o extracto con tu cartera (.pdf)».
-- **Límite de tamaño**: 10 MB, con el error `file_too_large`.
-- **«Importaciones anteriores»**: la lista del punto 4.
+  - **«Elegir fichero» / «Choose file»** (`<input type="file" accept=".xlsx,.csv,.pdf,.xls">` etiquetado);
+  - **arrastrar y soltar** en el ordenador;
+  - ayuda: «BBVA: informe de movimientos (.xlsx). MyInvestor: movimientos (.xlsx) o extracto con tu cartera (.pdf)».
+- **Límite**: 10 MB, con el error `file_too_large`.
 
-### 2. Asistente (componente con estado; **no escribe nada hasta confirmar**)
-Un indicador muestra los 4 pasos. Si se sale de `#/importar` con un asistente a medias, un diálogo pregunta «¿Descartar la importación en curso?».
+### 2. Asistente (estado en memoria; **no escribe nada hasta «Importar»**)
+**Comportamiento general**:
+- Indicador de pasos: «Fichero · Cuentas · Revisión · Resultado». SPEC-0017 inserta «Mapeo» cuando se usa.
+- Los pasos 2 y 3 tienen **«Atrás»**, que conserva lo elegido. Volver al paso 1 descarta el fichero.
+- Salir de `#/importar` a medias pregunta «¿Descartar la importación en curso?».
+- Si Míre se **bloquea** (SPEC-0005) a medias, el asistente se descarta (no se había escrito nada). Al desbloquear, Importar muestra el aviso «La importación en curso se descartó al bloquearse Míre».
 
-**Paso 1 · Fichero**
-- Se ejecuta `import.read` en el worker.
-- **Si va bien**, se muestra:
-  - el formato detectado: «BBVA», «MyInvestor (movimientos)» o «MyInvestor (cartera)»;
-  - el número de filas o posiciones y el rango de fechas;
-  - los avisos de fichero;
-  - los **errores de fila** (`fila N: <mensaje traducido del código>`); esas filas no se importan.
-- **Si hay un error de fichero**, mensaje traducido y la opción «Elegir otro fichero»:
+**Paso 1 · Fichero** (`import.read`):
+- **Si va bien**: el formato detectado («BBVA», «MyInvestor (movimientos)» o «MyInvestor (cartera)»), el número de filas o posiciones y el rango de fechas. Los **errores de fila** se listan como `fila N: <mensaje traducido>`; esas filas no se importan.
+- **Errores de fichero**, cada uno con «Elegir otro fichero»:
 
   | Error | Mensaje |
   |---|---|
   | `xls_not_supported` | Instrucciones para guardar como `.xlsx` |
   | `unreadable_file` | «No se puede leer el fichero» |
   | `pdf_layout_unknown` | «Este PDF no tiene la tabla de posiciones de MyInvestor» |
-  | `unknown_format` | «Formato no reconocido». SPEC-0017 añade aquí «Mapear columnas». |
+  | `unknown_format` | «Formato no reconocido» (SPEC-0017 añade «Mapear columnas») |
+  | `file_too_large` | «El fichero supera los 10 MB» |
 
-**Paso 2 · Cuentas**, una tarjeta por cada clave de origen (`ParsedFile.accounts`):
-- **Con cuenta enlazada viva**: se preselecciona y se puede cambiar por otra.
-- **Si esa cuenta está archivada**: aviso «Esta cuenta está archivada», con la casilla **«Desarchivar al importar»** marcada por defecto.
-- **Sin enlace**: se ofrece **«Crear cuenta nueva»** (por defecto) o **«Usar una cuenta existente»** (selector).
-  - Al crear, el nombre (editable) viene de la propuesta.
-  - El tipo es `checking`, `savings` o `cash` en movimientos, y fijo `investment` en el PDF.
-  - En el PDF, el grupo es «Cartera MyInvestor».
-- **Saldo inicial** (si el plan lo sugiere, MyInvestor): campo editable, aceptado por defecto, con la explicación «Calculado a partir del primer saldo del extracto».
-- **Fecha de la valoración** (PDF sin fecha): campo de fecha obligatorio; «Continuar» queda deshabilitado mientras falte.
+**Paso 2 · Cuentas** (una tarjeta por cada entrada de `ParsedFile.accounts`):
+- **Con `linkedAccountId`**: esa cuenta preseleccionada, y se puede cambiar. Si está **archivada**, aviso «Esta cuenta está archivada» con la casilla **«Desarchivar al importar»** marcada (decisión `unarchive`).
+- **Sin enlace**: **«Crear cuenta nueva»** (por defecto) o **«Usar una cuenta existente»**.
+  - Al crear, el nombre es editable desde la propuesta y el tipo es `checking`, `savings` o `cash`.
+  - En el PDF, el tipo `investment` es fijo y se conservan el ISIN y el grupo «Cartera MyInvestor».
+- **Selector de cuenta existente**:
+  - en el PDF solo ofrece cuentas `investment` y no repite una cuenta ya elegida para otro ISIN;
+  - en movimientos ofrece las no `investment`.
+- **PDF sin fecha**: campo **«Fecha de la valoración»**, obligatorio; «Continuar» queda deshabilitado mientras falte.
 
-**Paso 3 · Revisión** (`import.resolve`):
-- **«Requiere tu atención»** (arriba):
-  - **Posibles duplicados**: cada uno sin marcar por defecto, con la casilla «Importar igualmente».
-  - **Traspasos sugeridos**: tarjeta con los dos lados (cuenta, fecha e importe), y el interruptor «Es un traspaso» **desactivado por defecto**; el usuario confirma.
-  - **Avisos**: `same_file` («Ya importaste este fichero») y `balance_chain_mismatch`.
-  - **Valoraciones duplicadas** (PDF): selector «Omitir» (por defecto) o «Reemplazar».
-- **«Nuevos (N)»**, plegado por defecto, con un resumen. Al desplegarlo, cada fila muestra:
+**Paso 3 · Revisión** (`import.resolve(parsed, assignments, { valuationDate })`):
+- **«Requiere tu atención»**, arriba:
+  - **Saldo inicial** de las cuentas cuyo plan trae `opening`: campo editable con el valor sugerido, aceptado por defecto, y la explicación «Calculado a partir del primer saldo del extracto».
+  - **Posibles duplicados** (`duplicate`): sin marcar por defecto, con la casilla «Importar igualmente».
+  - **Parecidos** (`nearDuplicate`): incluidos por defecto, con la nota «Parecido a un movimiento ya importado (mismo día e importe)» y una casilla para excluirlo.
+  - **Traspasos sugeridos**: tarjeta con **los dos lados** (cuenta, fecha, importe y concepto; si un lado ya estaba guardado, se indica «ya importado»), con el interruptor «Es un traspaso» **desactivado por defecto**.
+  - **Avisos** del plan: `same_file` («Ya importaste este fichero») y `balance_chain_mismatch`.
+- **Valoraciones** (PDF): una fila por posición (nombre, participaciones y valor) con el selector **«Importar» / «Omitir»**, y en las duplicadas **«Omitir»** (por defecto) / **«Reemplazar»**.
+- **«Nuevos (N)»**, plegado por defecto con un resumen. Cada fila muestra:
   - casilla de incluir, fecha, concepto y `Amount`;
-  - un selector de **categoría**, con la sugerida preseleccionada; hasta SPEC-0007 puede no haber categorías y solo aparece «Sin categoría»;
-  - en entradas que no son traspaso, la acción **«Marcar como aportación externa»**.
+  - **categoría**: selector con `suggestedCategoryId` preseleccionado; sin categorías aparece solo «Sin categoría»;
+  - **«Aportación externa»**: solo en filas con importe > 0. Es **excluyente** con «Es un traspaso»: si la fila está en un traspaso activado, el interruptor queda deshabilitado, y al revés.
 - **Pie**: «Se importarán N movimientos (ingresos X, gastos Y), T traspasos y V valoraciones; se omitirán D».
   - Botón **«Importar»**.
-  - Si no hay nada que importar ni ninguna cuenta que crear, el botón queda deshabilitado con el texto «No hay nada nuevo que importar».
+  - Si no hay nada que importar ni ninguna cuenta que crear, el botón queda deshabilitado con «No hay nada nuevo que importar».
 
-**Paso 4 · Resultado** (`import.commit`):
-- «Importados N movimientos en: …» (o valoraciones), más los avisos `duplicate_at_commit` si los hay.
-- **Comprobación de saldo**, por cuenta con movimientos importados:
-  - **si el fichero traía saldo**: se muestra `diff`. Con 0: «El saldo cuadra con el extracto». Si no: «Diferencia de ±X € con el extracto», con un enlace a la cuenta;
-  - **si no lo traía (BBVA)**: campo opcional **«Saldo real en tu banco»** con «Comprobar», que llama a `recordBalanceCheck` y muestra el mismo mensaje.
-- Botones «Ver movimientos» (`#/movimientos?cuenta=…` si hay una sola cuenta) e «Importar otro fichero».
+**Paso 4 · Resultado** (`import.commit`, que devuelve `accounts[]` y `duplicateAtCommit`):
+- «Importados N movimientos en: <cuenta (n)…>» o «Importadas V valoraciones».
+- Si hay filas en `duplicateAtCommit`: «M filas no se importaron porque ya existían».
+- **Saldo**, por cuenta:
+  - **con `diffCents`**: 0 → «El saldo cuadra con el extracto»; otro valor → «Diferencia de ±X € con el extracto», con enlace a la cuenta;
+  - **sin `diffCents`** (BBVA): campo opcional **«Saldo en tu banco el dd/mm/aaaa»**, con la fecha del último movimiento importado de esa cuenta, y «Comprobar», que llama a `balance.record` (`recordBalanceCheck` con esa fecha) y muestra el mismo mensaje.
+- **Error de `commit`**: si la transacción se revierte, se muestra el mensaje traducido de su código, con «Volver a la revisión».
+- **Botones**: «Ver movimientos» (`#/movimientos?cuenta=…` si hay una sola cuenta) e «Importar otro fichero».
 
-### 3. Integración con los motores
-- **Dónde se ejecuta**: la lectura (ExcelJS y pdf.js) y la lógica corren en el **worker de la base de datos** (ADR-0004).
-- **pdf.js** se configura con `isEvalSupported: false` y `GlobalWorkerOptions.workerSrc` apuntando a su worker. Ese fichero, igual que ExcelJS y pdf.js, entra en el *precache* de la PWA, de modo que importar funciona **sin conexión**.
-- **Paso del fichero**: los bytes viajan al worker como `ArrayBuffer` transferido; nunca se guardan.
-- **Traducción de decisiones**: la interfaz convierte lo elegido en los pasos 2 y 3 a `assignments` y `decisions` de SPEC-0011 y SPEC-0012, incluidos «Desarchivar al importar» (llama a `unarchiveAccount` en la misma transacción del `commit`), el saldo inicial editado y la fecha de valoración.
-
-### 4. Historial (`listImportBatches`, repositorio nuevo)
-- **Contenido**: las importaciones **no demo**, de la más reciente a la más antigua, hasta 50.
-- **Cada fila**: fecha y hora, formato (etiquetas de SPEC-0015), nombre del fichero, número importado y estado («Activa» / «Deshecha»).
-- **«Deshacer»** (solo en las activas): diálogo que explica el efecto («Se borran sus N movimientos o valoraciones; los traspasos con otras importaciones se desvinculan; las cuentas se mantienen»).
-  - Llama a `import.revert`.
-  - El error `revert_blocked_by_later_batch` se explica: «Deshaz antes la importación del dd/mm/aaaa que reemplazó valoraciones de esta».
+### 3. Integración
+- **Ejecución**: la lectura (ExcelJS y pdf.js) y la lógica corren en el **worker de la base de datos** (ADR-0004).
+  - pdf.js va con `isEvalSupported: false` y `GlobalWorkerOptions.workerSrc` apuntando a su worker.
+  - Ese fichero, ExcelJS y pdf.js entran en el *precache*: importar funciona **sin conexión**.
+- **Paso del fichero**: los bytes viajan como `ArrayBuffer` transferido y nunca se guardan.
+- **Decisiones**: lo elegido en los pasos 2 y 3 se traduce exactamente al tipo `Decisions` de SPEC-0011 y SPEC-0012.
+- **Métodos de la API del worker que usa la interfaz** (`src/db/api.ts`); esta spec añade los que no existan ya:
+  - `import.read`, `import.resolve` e `import.commit`;
+  - `accounts.list` (cuentas vivas, con tipo y estado de archivo);
+  - `categories.list`;
+  - `balance.record`.
+- **Textos**: todos tienen clave en `es.json` y `en.json`.
 
 ## Fuera de alcance
-- Mapeo de columnas y plantillas para otros bancos: SPEC-0017.
-- Varios ficheros a la vez, y «Compartir con Míre» desde Android (no elegido).
-- Crear o editar categorías y reglas: SPEC-0007.
+- Historial y «Deshacer»: SPEC-0019. Mapeo de columnas: SPEC-0017.
+- Varios ficheros a la vez, y «Compartir con Míre» (no elegidos).
+- Crear o editar categorías y reglas: SPEC-0007 y SPEC-0018.
 
 ## Criterios de aceptación
-**Condiciones de todos los e2e**:
-- parten de la seguridad configurada y **sin** datos de ejemplo;
-- se ejecutan sobre la build con la CSP de SPEC-0014;
-- suben los ficheros sintéticos de `src/import/__fixtures__/` con `setInputFiles`;
-- para no pasarse del tiempo, cada fichero e2e encadena varios casos en un mismo contexto.
+**Condiciones de los e2e**:
+- parten de la seguridad configurada y **sin** datos;
+- se ejecutan sobre la build;
+- suben los ficheros sintéticos con `setInputFiles`;
+- **como máximo 5 ficheros e2e** en esta spec, con varios casos encadenados por contexto.
 
-1. **CA-01** · BBVA de extremo a extremo:
-   - el paso 1 muestra «BBVA», 9 filas y el rango 01/09/2026–20/09/2026;
+1. **CA-01** · BBVA:
+   - el paso 1 muestra «BBVA», 9 filas y 01/09/2026–20/09/2026;
    - el paso 2 propone crear «Diario» y «Ahorro»;
-   - el paso 3 muestra 1 traspaso sugerido (filas 2 y 3) desactivado y «Nuevos (9)». Se activa el traspaso y se importa;
-   - el resultado dice 9 importados;
-   - con «Saldo real» de «Diario» `1.023,44` dice que cuadra; con `1.000,00` dice «Diferencia de +23,44 €»;
+   - el paso 3 muestra 1 traspaso sugerido (filas 2 y 3, desactivado) y «Nuevos (9)»;
+   - se activa el traspaso y se importa: el resultado dice 7 en «Diario» y 2 en «Ahorro»;
+   - «Saldo en tu banco el 15/09/2026» de «Diario» con `1.023,44` → cuadra; con `1.000,00` → «Diferencia de +23,44 €»;
    - Inicio muestra un patrimonio de `1.338,44 €`.
    - Cubre SPEC-0001 CA-04.
-2. **CA-02** · Reimportar BBVA:
-   - el paso 3 muestra el aviso «Ya importaste este fichero» y 9 posibles duplicados sin marcar;
-   - «Importar» está deshabilitado con «No hay nada nuevo que importar».
-3. **CA-03** · MyInvestor movimientos tras BBVA:
-   - el paso 2 propone «MyInvestor efectivo» con un saldo inicial de `100,00`;
-   - el paso 3 sugiere **solo** el traspaso de 500 € con «Diario» (10/09 ↔ 12/09);
-   - al aceptarlo e importar, el resultado dice «El saldo cuadra con el extracto»;
-   - en otro contexto, con el saldo inicial editado a `99,00`, dice «Diferencia de −1,00 €».
+2. **CA-02** · Reimportar BBVA: el paso 3 muestra «Ya importaste este fichero» y 9 posibles duplicados sin marcar, y «Importar» queda deshabilitado.
+3. **CA-03** · MyInvestor tras BBVA:
+   - el paso 2 propone «MyInvestor efectivo»;
+   - el paso 3 muestra el saldo inicial `100,00` y **solo** el traspaso de 500 € con «Diario» (10/09, «ya importado» ↔ 12/09);
+   - al activarlo e importar, el resultado dice «El saldo cuadra con el extracto»;
+   - en otro contexto, con el saldo inicial `99,00`, dice «Diferencia de −1,00 €».
    - Cubre SPEC-0001 CA-05 (movimientos), CA-07 y CA-21.
-4. **CA-04** · Cartera en PDF:
-   - `myinvestor-extracto.pdf` crea 4 cuentas de inversión en «Cartera MyInvestor», y en Inicio el grupo vale `5.930,31 €`;
-   - `myinvestor-extracto-v2.pdf` con «Reemplazar» en LU0000000001 lo deja en `5.980,19 €`;
-   - deshacer esa importación lo devuelve a `5.930,31 €`.
+4. **CA-04** · Cartera:
+   - `myinvestor-extracto.pdf` crea 4 cuentas en «Cartera MyInvestor», y el grupo vale `5.930,31 €` en Inicio;
+   - `myinvestor-extracto-v2.pdf` con «Reemplazar» en LU0000000001 lo deja en `5.980,19 €`.
    - Cubre SPEC-0001 CA-05 (cartera).
-5. **CA-05** · `myinvestor-extracto-sin-fecha.pdf`: el paso 2 exige la fecha; con ella, la importación funciona.
-6. **CA-06** · Errores:
-   - `antiguo.xls`, `corrupto.xlsx`, `sin-posiciones.pdf` y `generico-latin1.csv` muestran sus mensajes;
-   - un fichero de 11 MB, generado en el test, da `file_too_large`.
-7. **CA-07** · Aportación externa: en el paso 3 de BBVA, marcar la fila 1 (+2.000,00 €) como aportación externa hace que, tras importar, aparezca así en Movimientos (SPEC-0015) y no cuente como ingreso. Cubre SPEC-0001 CA-20.
+5. **CA-05** · PDF sin fecha: con `myinvestor-extracto-sin-fecha.pdf`, el paso 2 exige la fecha; con `24/10/2026` se importa, y el grupo vale `5.930,31 €`.
+6. **CA-06** · Errores: `antiguo.xls`, `corrupto.xlsx`, `sin-posiciones.pdf`, `generico-latin1.csv` y un fichero de 11 MB generado en el test muestran sus mensajes.
+7. **CA-07** · Aportación externa:
+   - en BBVA, con la fila 1 (+2.000,00 €) como aportación externa y el traspaso **sin** activar, tras importar Movimientos (SPEC-0015) muestra la marca en esa fila y el contador da ingresos `315,00 €` y gastos `976,56 €`;
+   - el interruptor no aparece en filas negativas;
+   - al activar el traspaso de las filas 2 y 3, la fila 3 deja de ofrecerlo.
+   - Cubre SPEC-0001 CA-20.
 8. **CA-08** · Categoría sugerida (Vitest, componente con un plan simulado): la fila con `suggestedCategoryId` sale con esa categoría preseleccionada, y el resto con «Sin categoría».
-9. **CA-09** · Historial y deshacer:
-   - tras BBVA y MyInvestor con el traspaso aceptado, el historial lista 2 importaciones activas;
-   - deshacer la de BBVA la marca «Deshecha», pone «Diario» a `0,00 €` y deja el movimiento de +500 de MyInvestor sin traspaso;
-   - la fila deshecha ya no ofrece «Deshacer»;
-   - los datos de ejemplo cargados desde Diagnóstico no aparecen en el historial.
-10. **CA-10** · Cuenta archivada: tras importar BBVA, archivar «Diario» y deshacer la importación, al reimportar el paso 2 avisa de que está archivada con «Desarchivar al importar» marcado; tras importar, «Diario» vuelve a verse en Inicio.
-11. **CA-11** · Salir a medias: en el paso 3, ir a Inicio muestra el diálogo. Al cancelar se sigue en el paso 3; al aceptar, `listImportBatches` sigue vacío.
-12. **CA-12** · Sin conexión: tras una primera visita y con la red cortada, importar `bbva-informe.xlsx` y `myinvestor-extracto.pdf` funciona, porque las librerías y el worker de pdf.js están en el *precache*.
-13. **CA-13** · CSP: durante CA-01 a CA-12 no se produce ningún evento `securitypolicyviolation`, y la consola no muestra errores de `eval`.
-14. **CA-14** · axe sin infracciones en Importar, los 4 pasos, el historial y los diálogos, en claro y en oscuro; sin scroll horizontal a 375 px.
-15. **CA-15** · Los e2e de todas las specs anteriores pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
+9. **CA-09** · Cuenta archivada: tras importar BBVA, archivar «Diario» e importar `bbva-informe-parcial.xlsx`, el paso 2 avisa con «Desarchivar al importar» marcado; tras importar la fila nueva, «Diario» vuelve a verse en Inicio.
+10. **CA-10** · Salir y bloquear:
+    - en el paso 3, ir a Inicio muestra el diálogo. Al cancelar se sigue en el paso 3; al aceptar no se escribe nada (Inicio sigue sin cuentas);
+    - en el paso 3, «Bloquear ahora» y desbloquear muestra el aviso de importación descartada, sin cuentas creadas;
+    - «Atrás» del paso 3 al 2 conserva el nombre editado de una cuenta nueva.
+11. **CA-11** · Sin conexión: tras una primera visita y con la red cortada, importar `bbva-informe.xlsx` y `myinvestor-extracto.pdf` funciona.
+12. **CA-12** · CSP en el worker: en un e2e, `page.route` añade a las respuestas de los scripts de worker la CSP de SPEC-0014 sin `unsafe-eval` (como en el spike). Importar BBVA y el PDF funciona y no aparecen errores de CSP ni de `eval` en la consola de la página ni en la de los workers.
+13. **CA-13** · axe sin infracciones en Importar y en los 4 pasos (con el PDF y con BBVA), en claro y en oscuro; sin scroll horizontal a 375 px.
+14. **CA-14** · Los e2e de todas las specs anteriores pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos, con el tiempo de esta spec medido y anotado en el PR.
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
-- **Tiempo de los e2e**: es la spec con más recorridos. Mitigación: encadenar casos por contexto y medir; si se supera el límite, agrupar más (sin quitar CA).
-- **Ficheros reales**: los e2e usan ficheros sintéticos. La validación real es SPEC-0012 CA-07 (`import:check`), y después usarlo de verdad (SPEC-0001 CA-19).
-- **Tamaño**: 4 pasos, historial y 15 CA. Cabe en una sesión si se reutilizan los componentes de SPEC-0003; si no, se separa el historial (requiere volver a Refinar).
+- **Tiempo de los e2e**: hay muchos recorridos. El límite es de 5 ficheros y se mide (CA-14).
+- **Ficheros reales**: la validación real es SPEC-0012 CA-07 (`import:check`) y después el uso real (SPEC-0001 CA-19).
 
 ### Preguntas abiertas
 - Ninguna para el propietario.

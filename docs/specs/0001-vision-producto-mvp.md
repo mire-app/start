@@ -27,7 +27,7 @@ Fijar **qué es Míre y qué hace su primera versión utilizable (MVP)**, para q
   - comprobación de saldo y deshacer (CA-21);
   - grupos de cuentas;
   - sin `.xls`;
-  - reparto en SPEC-0004, SPEC-0011, SPEC-0012 y SPEC-0010.
+  - reparto en SPEC-0004, SPEC-0011, SPEC-0012, SPEC-0010, SPEC-0017 y SPEC-0019.
 
   El propietario reabrió la spec para ello.
 - Solo importación (2026-10-24): los movimientos, las cuentas y las valoraciones solo entran importando; no hay alta manual (funciones 1, 2 y 6, CA-01 y CA-02).
@@ -105,12 +105,14 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0016 | Rutas, Ajustes, Diagnóstico y datos de ejemplo | CA-15 (idioma en Ajustes), CA-16 |
 | SPEC-0006 | Navegación, Inicio, cuentas, grupos e inversiones | CA-01, CA-09 (patrimonio y desglose), CA-16 |
 | SPEC-0015 | Movimientos: lista, filtros, edición, traspasos y aportación externa | CA-02, CA-03, CA-20 (pantallas) |
-| SPEC-0007 | Categorías y reglas | CA-08 |
+| SPEC-0007 | Categorías: lista inicial, gestión y recategorización | CA-08 (categorías) |
+| SPEC-0018 | Reglas «el concepto contiene X → categoría Y» | CA-08 (reglas) |
 | SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
-| SPEC-0010 | Asistente de importación para BBVA y MyInvestor (pantallas) | CA-04, CA-05, CA-07, CA-20, CA-21 (de extremo a extremo) |
+| SPEC-0010 | Asistente de importación para BBVA y MyInvestor (pantallas) | CA-04, CA-05, CA-07, CA-20, CA-21 (comprobación de saldo, de extremo a extremo) |
+| SPEC-0019 | Historial de importaciones y deshacer (pantallas) | CA-21 (deshacer, de extremo a extremo) |
 | SPEC-0017 | Mapeo de columnas y plantillas para otros bancos (pantallas) | CA-06 (de extremo a extremo) |
-| SPEC-0002 … SPEC-0017 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
+| SPEC-0002 … SPEC-0019 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance
 - Conexión bancaria de cualquier tipo (PSD2, agregadores). **Descartado del producto.**
@@ -118,7 +120,7 @@ Cambios documentales que acompañan a esta spec:
 - En el MVP (candidatos a futuro): fiscalidad, app móvil nativa, inmuebles y bienes, deudas y tarjetas de crédito (el propietario solo usa débito), multimoneda, varios usuarios u hogar, presupuestos, gastos recurrentes, objetivos de ahorro y previsión.
 - Elegir tecnología concreta (lenguaje, framework, base de datos local, librería de cifrado, alojamiento): SPEC-0002.
 - Paleta, tipografía y componentes: SPEC-0003.
-- Esquema de datos: SPEC-0004. Detalle de formatos de importación: SPEC-0011 y SPEC-0012. Pantallas de importación: SPEC-0010.
+- Esquema de datos: SPEC-0004. Detalle de formatos de importación: SPEC-0011 y SPEC-0012. Pantallas de importación: SPEC-0010, SPEC-0017 (mapeo) y SPEC-0019 (historial).
 - Ficheros Excel antiguos (`.xls`): no se leen; se guardan antes como `.xlsx` (decisión del propietario, ADR-0004).
 - Custodia de claves y token de GitHub: SPEC-0005. Recuperación, CSP y repositorio de datos: SPEC-0014. Exportación, borrado y aviso de privacidad: SPEC-0013.
 
@@ -141,7 +143,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 15. **CA-15** · La interfaz se puede cambiar entre español e inglés; importes y fechas se muestran en formato es-ES por defecto.
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
-18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0017 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
+18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0019 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
 19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa Míre durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
 20. **CA-20** · Un movimiento marcado como aportación externa suma al patrimonio y no aparece como ingreso.
 21. **CA-21** · Tras importar, si el fichero trae saldo (MyInvestor) o el usuario indica el saldo real (BBVA), Míre muestra la diferencia con el saldo calculado cuando no coinciden; una importación completa se puede deshacer.

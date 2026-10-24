@@ -98,7 +98,7 @@ Completar la seguridad de SPEC-0005 con:
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
-- **Librerías bajo la CSP**: ExcelJS (SPEC-0011) podría necesitar `eval`; no se ejercita aquí. SPEC-0010 lo verificará al importar bajo la CSP. Si falla, se cargaría en un worker propio, que no está sujeto a la meta CSP.
+- **Librerías bajo la CSP**: ExcelJS y pdf.js corren en el worker de la base de datos, al que la meta CSP no se aplica. Un spike del 2026-10-24 confirmó que funcionan en un Web Worker de módulo incluso con CSP estricta en cabecera (sin `unsafe-eval`). SPEC-0010 lo verifica de extremo a extremo.
 - **Workers y service worker sin CSP propia**: aceptado; solo ejecutan código del propio origen.
 - **Instalación de la GitHub App de Claude** con acceso a «todos los repositorios» de la cuenta personal: CA-06 lo detecta.
 

@@ -61,10 +61,13 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
 
 ### 2. Plan y confirmación (extensión de SPEC-0011)
 - **Asignación**: cada ISIN se asigna con `source_link('myinvestor_pdf', isin)`. Si es nuevo, se propone `create: { name, type: 'investment', institution: 'MyInvestor', isin }` dentro del grupo «Cartera MyInvestor». El grupo se crea si no existe y se reutiliza si ya existe con ese nombre.
-- **Duplicado de valoración**: si la cuenta ya tiene una valoración viva en esa fecha, el plan la marca `duplicate` con la acción por defecto `skip`. Las acciones posibles son:
-  - `skip`: no se importa;
-  - `replace`: borrado lógico de la anterior, con `deleted_by_batch_id` igual al lote nuevo, e inserción de la nueva;
-  - `include`: no se permite, por la restricción `UNIQUE`.
+  - Una asignación a una cuenta existente que no es `investment` da `account_type_mismatch`.
+  - Asignar dos ISIN a la misma cuenta da `account_assigned_twice`.
+  - Al crear, el usuario puede cambiar el nombre; `isin` y grupo se conservan.
+- **Fecha**: `resolve(parsed, assignments, { valuationDate })` recibe la fecha (la del PDF, o la elegida por el usuario si falta). Sin fecha da `valuation_date_required`. Con ella se detectan los duplicados y la misma fecha llega al `commit`.
+- **Tipo `ValuationPlan`** (en `ImportPlan.valuations`): `{ isin, accountId, accountName, isNew, name, currency, units, valueCents, duplicate: boolean, defaultAction: 'import' | 'skip' }`. Por defecto es `skip` si es duplicada e `import` si no.
+- **Decisión** `valuations[isin]`: `'import'`, `'skip'` (permitido también en no duplicadas, para excluir una posición) o `'replace'` (solo en duplicadas; en otras da `replace_without_duplicate`).
+- **Duplicado de valoración**: si la cuenta ya tiene una valoración viva en esa fecha, el plan la marca `duplicate`. `replace` borra (lógicamente) la anterior, con `deleted_by_batch_id` igual al lote nuevo, e inserta la nueva. Importar una duplicada sin reemplazar no es posible, por la restricción `UNIQUE`.
 - **Aviso de fichero**: si `file_sha256` coincide con un lote no revertido, el plan añade el aviso `same_file`.
 - **`commit`**, en una transacción:
   - si todas las posiciones son `skip` y no hay cuentas que crear, devuelve `nothing_to_import` **sin crear lote**;
@@ -75,7 +78,7 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
   1. marca `deleted_at` en las valoraciones del lote;
   2. **restaura** (`deleted_at = NULL`, `deleted_by_batch_id = NULL`) las valoraciones que ese lote había reemplazado.
 
-  Los lotes se deshacen en orden inverso: si una valoración fue reemplazada por un lote posterior que sigue vivo, `revert` del lote anterior da `revert_blocked_by_later_batch` (hay que deshacer antes el posterior).
+  Los lotes se deshacen en orden inverso: si una valoración fue reemplazada por un lote posterior que sigue vivo, `revert` del lote anterior da `revert_blocked_by_later_batch`, con `{ blockingBatchId, blockingDate }` del lote posterior (hay que deshacer antes ese).
 
   Así se cumple SPEC-0001 CA-21.
 
@@ -144,8 +147,12 @@ Tests de Vitest en Node, salvo CA-07.
    - reimportar el mismo PDF marca las 4 valoraciones `duplicate` con la acción `skip` y el aviso `same_file`, y el `commit` devuelve `nothing_to_import` sin crear lote;
    - importar `myinvestor-extracto-v2.pdf` con `replace` en LU0000000001 da un `groupValue` de **598019**;
    - `revert` de ese lote lo devuelve a **593031**, con la valoración original restaurada;
-   - importando v2 y después v3, ambas con `replace` en LU0000000001, `revert` del lote v2 da `revert_blocked_by_later_batch`; tras revertir antes el v3, el de v2 sí se revierte.
-4. **CA-04** · `myinvestor-extracto-sin-fecha.pdf` produce `valuationDate = null`, y el `commit` sin `decisions.valuationDate` falla con `valuation_date_required`.
+   - importando v2 y después v3, ambas con `replace` en LU0000000001, `revert` del lote v2 da `revert_blocked_by_later_batch` con el `blockingBatchId` del lote v3 y su fecha; tras revertir antes el v3, el de v2 sí se revierte.
+4. **CA-04** · Sin fecha:
+   - `myinvestor-extracto-sin-fecha.pdf` produce `valuationDate = null`, y `resolve` sin `valuationDate` da `valuation_date_required`;
+   - con `valuationDate = '2026-10-24'`, después de importar `myinvestor-extracto.pdf`, el plan marca las 4 posiciones como `duplicate`.
+   - Asignar un ISIN a una cuenta `checking` da `account_type_mismatch`, y dos ISIN a la misma cuenta, `account_assigned_twice`.
+   - `'skip'` en una posición no duplicada la excluye del `commit` (3 valoraciones).
 5. **CA-05** · `sin-posiciones.pdf` da `pdf_layout_unknown`.
 6. **CA-06** · `pnpm import:check` sobre cada fichero sintético de SPEC-0011 y de esta spec:
    - termina con **código 0** en los válidos e imprime el formato correcto. Esto incluye `myinvestor-extracto.pdf`, `-v2.pdf` y `-v3.pdf`, `myinvestor-extracto-sin-fecha.pdf`, que imprime «fecha de valoración: no», y `generico-latin1.csv` y `generico.xlsx` con `--plantilla` apuntando a la plantilla de SPEC-0011 CA-10 (guardada como `src/import/__fixtures__/plantilla-generico.json`);

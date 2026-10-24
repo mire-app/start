@@ -66,4 +66,4 @@ En total, unos 2,5 MB más en el *precache* de la PWA. Se descargan una vez y se
 - **−** Leer PDF depende de la maquetación de MyInvestor: si la cambian, hay que ajustar el lector.
 - **−** Los `.xls` necesitan un paso manual del usuario (guardar como `.xlsx`).
 - **−** ExcelJS 4.4.0 no publica versión nueva desde 2023. Es estable para leer `.xlsx`, pero si se abandona habrá que reevaluarlo (alternativa: SheetJS actual en `vendor/`).
-- **−** ExcelJS y pdf.js dentro del **worker de la base de datos** no están validados en navegador. Plan B: leer el fichero en un worker propio o en el hilo principal y pasar al worker de la base solo el resultado (`ParsedFile`). Lo verifica SPEC-0010.
+- **Validado (spike del 2026-10-24)**: ExcelJS 4.4.0 y pdf.js 6.4.299 (`legacy`, `isEvalSupported: false`) leen `.xlsx` y PDF dentro de un Web Worker de módulo en Chromium con CSP estricta en cabecera, sin `unsafe-eval`. Plan B si cambia: leer en un worker propio y pasar solo el `ParsedFile`.
