@@ -1,0 +1,17 @@
+{
+  "home": {
+    "title": "Home"
+  },
+  "language": {
+    "label": "Language",
+    "es": "Español",
+    "en": "English"
+  },
+  "storage": {
+    "title": "Local storage",
+    "test": "Test storage",
+    "count": "Current value",
+    "busy": "Míre is already open in another tab",
+    "error": "The local database could not be opened"
+  }
+}

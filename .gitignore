@@ -4,3 +4,10 @@
 .env
 .env.*
 !.env.example
+# Project
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.cache/

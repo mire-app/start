@@ -1,0 +1,17 @@
+{
+  "home": {
+    "title": "Inicio"
+  },
+  "language": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "storage": {
+    "title": "Almacenamiento local",
+    "test": "Probar almacenamiento",
+    "count": "Valor actual",
+    "busy": "Míre ya está abierto en otra pestaña",
+    "error": "No se ha podido abrir la base de datos local"
+  }
+}
