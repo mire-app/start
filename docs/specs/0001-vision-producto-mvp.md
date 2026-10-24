@@ -1,7 +1,7 @@
 ---
 id: SPEC-0001
 title: Visión de producto y MVP
-status: approved          # draft → approved (solo una persona) → implemented
+status: draft          # draft → approved (solo una persona) → implemented
 summary: Visión TO-BE de NÖM, alcance del MVP individual local-first con sincronización cifrada en GitHub, y fases posteriores
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [ADR-0001]       # IDs de specs y ADR relacionados
