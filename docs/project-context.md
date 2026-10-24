@@ -21,7 +21,7 @@
 - Analysis phase closed: implementation in backlog order, one new session per `/actuar`. SPEC-0002 implemented; next is SPEC-0003.
 - Storage (ADR-0001): local-first DB per device, synced encrypted to a separate private GitHub repo.
 - Stack decided (ADR-0002) and in place: TypeScript (`strict`) + React + Vite, SQLite WASM (`opfs-sahpool`) in a Web Worker, PWA (vite-plugin-pwa) on GitHub Pages under `/start/`, i18next es/en, Vitest + Playwright (Chromium). Node 22 (`.nvmrc`), pnpm via `corepack pnpm` (pinned in `packageManager`), exact versions.
-- `.arda/checks.sh` runs install, exact versions, lint, format, types, unit tests, build and e2e (stop hook and `arda-gate`). Outside CI it skips everything when all changes against `origin/main` are under `docs/` or are `.arda/active-spec`. `deploy.yml` publishes to GitHub Pages on push to `main`.
+- `.arda/checks.sh` gets Node 22 from nodejs.org (SHA-256 verified, into `.cache/node`) when `node` is missing, is not 22.x or has no corepack, then runs install, exact versions, lint, format, types, unit tests, build and e2e (stop hook and `arda-gate`). Outside CI it skips everything when all changes against `origin/main` are under `docs/` or are `.arda/active-spec`. `deploy.yml` publishes to GitHub Pages on push to `main`.
 - Owner's decision: **refine all specs of the backlog before implementing any**.
 - Owner's decision: **import only** — accounts, transactions and valuations are created by importing; no manual entry (2026-10-24).
 - Working branch: `arda/claude`. Data repo (planned): private `mire-datos` in the owner's personal GitHub account; local DB not encrypted at rest (accepted risk, ADR-0005).

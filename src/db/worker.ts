@@ -33,6 +33,8 @@ async function open(filename: string): Promise<void> {
   const deadline = Date.now() + OPEN_RETRY_MS;
   for (;;) {
     try {
+      // forceReinitIfPreviouslyFailed exists in sqlite-wasm but is missing from its types; without
+      // it every retry would get the first cached rejection.
       const pool = await s.installOpfsSAHPoolVfs({
         name: 'mire-sahpool',
         forceReinitIfPreviouslyFailed: true,

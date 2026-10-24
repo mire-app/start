@@ -3,11 +3,11 @@ import { formatDate, formatEUR } from './format';
 
 describe('formatEUR', () => {
   it('groups thousands and puts a NBSP before €', () => {
-    expect(formatEUR(1234.56)).toBe('1.234,56 €');
+    expect(formatEUR(1234.56)).toBe('1.234,56\u00A0€');
   });
 
   it('formats negative amounts', () => {
-    expect(formatEUR(-5)).toBe('-5,00 €');
+    expect(formatEUR(-5)).toBe('-5,00\u00A0€');
   });
 });
 

@@ -28,7 +28,8 @@ export default defineConfig({
         // Includes the SQLite worker chunk (assets/*.js) and sqlite3.wasm.
         globPatterns: ['**/*.{js,css,html,wasm,png,svg,webmanifest,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        // autoUpdate: a new version takes over open pages without waiting.
+        // autoUpdate: a new version takes over open pages without waiting. vite-plugin-pwa only
+        // sets skipWaiting; clientsClaim makes the SW control the page on the first visit (CA-07).
         skipWaiting: true,
         clientsClaim: true,
       },

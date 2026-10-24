@@ -9,7 +9,11 @@ export class SmokeStore {
 
   private constructor(private readonly db: DbClient) {}
 
-  /** Opens the store once per page (React StrictMode runs effects twice in development). */
+  /**
+   * Opens the store once per page (React StrictMode runs effects twice in development).
+   * A failed open (e.g. `busy`) stays cached on purpose: the page must be reloaded to retry.
+   * Real multi-tab coordination belongs to SPEC-0006/0008.
+   */
   static open(): Promise<SmokeStore> {
     SmokeStore.opening ??= SmokeStore.create();
     return SmokeStore.opening;
