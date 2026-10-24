@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./secrets/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" require-approved-spec"},
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" protect-approval"},
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" protect-tests"},
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" protect-secrets"}
+        ]
+      },
+      {
+        "matcher": "Read|Grep",
+        "hooks": [
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" protect-secrets"}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" deny-dangerous"},
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" protect-secrets"},
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" protect-approval"}
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/arda-hook.sh\" stop-checks"}
+        ]
+      }
+    ]
+  }
+}
