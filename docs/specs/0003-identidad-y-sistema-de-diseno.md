@@ -272,7 +272,7 @@ Se importan con el alias `@/` → `src/`, configurado en `tsconfig` y en `vite.c
 - **Mantenimiento de shadcn/ui**: los componentes copiados se mantienen a mano. Mitigación: solo los del punto 9.
 - **View Transitions**: no está en Firefox ni en todos los WebKit; allí no hay animación (aceptado).
 - **Tamaño de la PWA**: Sora en cuatro pesos, Motion e iconos. Mitigación: subconjunto latino, iconos uno a uno y Motion solo donde se usa.
-- **Tiempo de los checks**: axe en 2 páginas × 2 temas, más tema, fuente y movimiento. Mitigación: presupuesto de 8 e2e nuevos y CA-14.
+- **Tiempo de los checks**: axe en 2 páginas × 2 temas, más tema, fuente y movimiento. Mitigación: presupuesto de 8 ficheros de test e2e nuevos y CA-14.
 - **Alcance**: la spec es amplia. Si `/actuar` no cabe en una sesión de Claude Pro, se parte en dos (tokens, tipografía y temas por un lado; logotipo, componentes y guía por otro). Requeriría volver a Refinar.
 
 ### Preguntas abiertas
