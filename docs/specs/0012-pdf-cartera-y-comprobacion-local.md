@@ -102,6 +102,7 @@ Las columnas «Precio medio posicion» y «Valor de mercado» también existen e
 Variantes:
 - `myinvestor-extracto-sin-fecha.pdf`: el mismo documento con `FECHA:` vacío;
 - `myinvestor-extracto-v2.pdf`: el mismo documento con la primera posición a `2.500,0000 €`;
+- `myinvestor-extracto-v3.pdf`: el mismo documento con la primera posición a `2.600,0000 €`;
 - `sin-posiciones.pdf`: solo las páginas 1, 2 y 5.
 
 ### 4. Comprobación local (`tools/import-check.ts`, `pnpm import:check <fichero> [--plantilla <fichero.json>]`)
@@ -142,11 +143,12 @@ Tests de Vitest en Node, salvo CA-07.
 3. **CA-03** · Duplicados y deshacer:
    - reimportar el mismo PDF marca las 4 valoraciones `duplicate` con la acción `skip` y el aviso `same_file`, y el `commit` devuelve `nothing_to_import` sin crear lote;
    - importar `myinvestor-extracto-v2.pdf` con `replace` en LU0000000001 da un `groupValue` de **598019**;
-   - `revert` de ese lote lo devuelve a **593031**, con la valoración original restaurada.
+   - `revert` de ese lote lo devuelve a **593031**, con la valoración original restaurada;
+   - importando v2 y después v3, ambas con `replace` en LU0000000001, `revert` del lote v2 da `revert_blocked_by_later_batch`; tras revertir antes el v3, el de v2 sí se revierte.
 4. **CA-04** · `myinvestor-extracto-sin-fecha.pdf` produce `valuationDate = null`, y el `commit` sin `decisions.valuationDate` falla con `valuation_date_required`.
 5. **CA-05** · `sin-posiciones.pdf` da `pdf_layout_unknown`.
 6. **CA-06** · `pnpm import:check` sobre cada fichero sintético de SPEC-0011 y de esta spec:
-   - termina con **código 0** en los válidos e imprime el formato correcto. Esto incluye `myinvestor-extracto-sin-fecha.pdf`, que imprime «fecha de valoración: no», y `generico-latin1.csv` y `generico.xlsx` con `--plantilla` apuntando a la plantilla de SPEC-0011 CA-10 (guardada como `src/import/__fixtures__/plantilla-generico.json`);
+   - termina con **código 0** en los válidos e imprime el formato correcto. Esto incluye `myinvestor-extracto.pdf`, `-v2.pdf` y `-v3.pdf`, `myinvestor-extracto-sin-fecha.pdf`, que imprime «fecha de valoración: no», y `generico-latin1.csv` y `generico.xlsx` con `--plantilla` apuntando a la plantilla de SPEC-0011 CA-10 (guardada como `src/import/__fixtures__/plantilla-generico.json`);
    - termina con **código 2** e imprime el código de error en `antiguo.xls`, `corrupto.xlsx` y `sin-posiciones.pdf`, y también en `generico-latin1.csv` **sin** `--plantilla` (`unknown_format`);
    - un test comprueba que su salida **no contiene** ningún concepto, importe, saldo, ISIN, alias (`DIARIO`, `AHORRO`), `TITULAR EJEMPLO` ni `ES00` de esos ficheros.
 7. **CA-07** · **El propietario** ejecuta `pnpm import:check` en su ordenador sobre sus tres ficheros reales (informe de BBVA, movimientos de MyInvestor y extracto PDF) y confirma que se detecta el formato correcto **sin errores de fila**. Es condición para marcar esta spec como `implemented`.

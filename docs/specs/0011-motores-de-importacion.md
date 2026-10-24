@@ -205,6 +205,8 @@ Se generan con ExcelJS en `src/import/__fixtures__/` y se versionan. Todos los d
 
 **`generico.xlsx`**: las mismas cabeceras y filas.
 
+**`plantilla-generico.json`**: la plantilla de CA-10, para `import:check --plantilla` (SPEC-0012).
+
 **`antiguo.xls`**: solo los 8 bytes de la firma OLE.
 
 **`corrupto.xlsx`**: bytes `PK` truncados.
