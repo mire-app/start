@@ -63,6 +63,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
   - estado `locked | unlocked`;
   - `unlock(dek)`, `lock()`, `isUnlocked()` y `withDek(fn)`, que lanza `locked` si está bloqueada;
   - `onBeforeLock(cb)`: un gancho que se llama antes de borrar la DEK. Lo usará SPEC-0008 para vaciar la cola de sincronización.
+  - `lock()` es **asíncrona**: espera a los `cb` que devuelvan una promesa, con un **plazo máximo de 2 s**, y después borra la DEK en cualquier caso.
 
 ### 2. Reglas del PIN y de la contraseña
 - **PIN**:
@@ -100,7 +101,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
 - **Contraseña maestra**: campo **«Contraseña maestra»** y botón **«Desbloquear»**.
 - **Errores**: en un contenedor `role="status"` (**nunca** `role="alert"`, reservado al aviso de SPEC-0002) con `data-error-code` (p. ej. `pin_too_simple`).
 - **Menú de `TopBar`**: un botón **«Menú» / «Menu»** que abre un `DropdownMenu` con **«Bloquear ahora» / «Lock now»**. SPEC-0014 y SPEC-0013 añaden más entradas.
-- **Selector de nombre accesible**: los ayudantes de e2e aceptan ambos idiomas mediante expresiones regulares (`/Contraseña maestra|Master password/`).
+- **Selector de nombre accesible**: los ayudantes de e2e aceptan ambos idiomas mediante expresiones regulares **ancladas** (`/^(Contraseña maestra|Master password)$/`, `/^PIN$/`), para que «PIN» no coincida con «Repite el PIN».
 
 ### 4. Autobloqueo
 - Se guardan `lastActivityAt` (en cada `pointerdown` o `keydown`) y `hiddenSince` (en `visibilitychange`).
@@ -132,7 +133,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
 - añadir `.skip` u `.only`;
 - cambiar *timeouts* dentro de los tests.
 
-**Control** `tools/check-test-changes.ts`, ejecutado por `.arda/checks.sh` **solo mientras `.arda/active-spec` apunta a esta spec**:
+**Control** `tools/check-test-changes.ts`, ejecutado con `tsx` (ADR-0004; si aún no está en `package.json`, esta spec lo añade como `devDependency` exacta) por `.arda/checks.sh` **solo mientras `.arda/active-spec` apunta a esta spec**. Su lógica se separa en `checkDiff(diff, baseTestFiles)`, una función pura con tests en `tools/*.test.ts` (el `include` de Vitest se amplía a `tools/**/*.test.ts`):
 - **base**: `git merge-base HEAD origin/main`, haciendo antes `git fetch origin main` si falta. Si no se puede resolver, **falla** con un mensaje claro (en `arda-gate`, `fetch-depth: 0` lo garantiza);
 - **qué comprueba**: los ficheros que en la base cumplen el patrón de tests de `arda_guard.py` deben seguir existiendo y su diff solo puede tener líneas añadidas de la lista permitida.
 
@@ -167,7 +168,9 @@ Fuera de SPEC-0005, el control no hace nada, de modo que no bloquea las specs fu
    - con 4 PIN erróneos se ven los intentos restantes;
    - si se recarga tras el 4.º y se falla una vez más, se pide la contraseña, porque el contador persiste;
    - con la contraseña se crea el PIN y se llega a la pantalla de inicio.
-6. **CA-06** · e2e de 30 días: con `page.clock.install()` y `fastForward` de 31 días **sin recargar**, al bloquear (`Bloquear ahora`) se pide la contraseña y no el PIN.
+6. **CA-06** · e2e de 30 días: con `page.clock.install()` y `fastForward` de 31 días **sin recargar**:
+   - si la app no se ha bloqueado sola, se pulsa «Bloquear ahora»;
+   - en cualquier caso, se pide la **contraseña** y no el PIN.
 7. **CA-07** · e2e de autobloqueo (`page.clock.install()` y `runFor`):
    - 5 min sin interacción muestran el PIN;
    - con un clic cada 4 min no se bloquea;
@@ -179,19 +182,30 @@ Fuera de SPEC-0005, el control no hace nada, de modo que no bloquea las specs fu
    - en IndexedDB no aparece el token en claro;
    - `daysLeft` es correcto.
    - Las cadenas de token de prueba tienen menos de 20 caracteres tras el prefijo.
-9. **CA-09** · `onBeforeLock` se llama antes de borrar la DEK, y `withDek` después de `lock()` lanza `locked` (Vitest).
-10. **CA-10** · Los e2e de SPEC-0002, SPEC-0003 y SPEC-0004 pasan con solo los cambios permitidos, verificado por `tools/check-test-changes.ts` en `checks.sh`. El aviso de dos pestañas (SPEC-0002 CA-08) sigue funcionando con `getByRole('alert')`.
-11. **CA-11** · axe (SPEC-0003) sin infracciones en la configuración, el PIN y la contraseña, en claro y en oscuro; sin scroll horizontal a 375 px.
-12. **CA-12** · `python3 .arda/tools/arda_ci.py secrets` pasa sobre los cambios de esta spec: las constantes de prueba no usan nombres que coincidan con `password|token|secret` con un valor literal de 12 o más caracteres.
-13. **CA-13** · `.arda/checks.sh` sigue por debajo de 5 minutos. El coste de Argon2id en los e2e (una configuración por contexto nuevo) se mide y se anota en el PR.
+9. **CA-09** · Gancho de bloqueo (Vitest):
+   - `onBeforeLock` se llama antes de borrar la DEK;
+   - un `cb` que tarda 5 s no impide el bloqueo pasados 2 s;
+   - `withDek` después de `lock()` lanza `locked`.
+10. **CA-10** · `checkDiff` (Vitest) **rechaza** diffs sintéticos que:
+    - añaden un `expect`;
+    - añaden `.skip` u `.only`;
+    - quitan una línea;
+    - borran o renombran un fichero de test de la base;
+    - cambian un `.test.ts` de Vitest.
+
+    Y **acepta** uno que solo añade `import { completeSetup, unlock } …` y `await completeSetup(page)`.
+11. **CA-11** · Los e2e de SPEC-0002, SPEC-0003 y SPEC-0004 pasan con solo los cambios permitidos, verificado por `tools/check-test-changes.ts` en `checks.sh`. El aviso de dos pestañas (SPEC-0002 CA-08) sigue funcionando con `getByRole('alert')`.
+12. **CA-12** · axe (SPEC-0003) sin infracciones en la configuración, el PIN y la contraseña, en claro y en oscuro; sin scroll horizontal a 375 px.
+13. **CA-13** · `python3 .arda/tools/arda_ci.py secrets` pasa sobre los cambios de esta spec: las constantes de prueba no usan nombres que coincidan con `password|token|secret` con un valor literal de 12 o más caracteres.
+14. **CA-14** · `.arda/checks.sh` sigue por debajo de 5 minutos. El coste de Argon2id en los e2e (una configuración por contexto nuevo) se mide y se anota en el PR.
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
 - **Riesgos aceptados** (ADR-0005): base local en claro; PIN de 4 dígitos atacable fuera del navegador por quien copie el perfil.
 - **Sincronización y bloqueo**: con Míre bloqueada no hay DEK, así que no se puede cifrar ni descifrar el token. La sincronización se pausa mientras está bloqueada, y `onBeforeLock` permite vaciar la cola antes de bloquear. Lo concretará SPEC-0008.
 - **Segundo dispositivo**: la configuración de esta spec crea una DEK **nueva**. Un segundo dispositivo debe importar el anillo del repositorio, no crear otro. SPEC-0008 añadirá esa opción a la bienvenida; mientras tanto, cada dispositivo sería independiente.
-- **Tiempo de los e2e**: cada contexto nuevo hace una configuración, con Argon2id a 64 MiB (≈1 s en el escritorio). No se puede reutilizar una sesión, porque la clave de dispositivo no se serializa en `storageState`. Se mide (CA-13); si se pasa del presupuesto, se reducen flujos e2e, no los parámetros.
-- **Escáner de secretos**: las constantes de prueba deben evitar el patrón de `arda_ci.py` (CA-12).
+- **Tiempo de los e2e**: cada contexto nuevo hace una configuración, con Argon2id a 64 MiB (≈1 s en el escritorio). No se puede reutilizar una sesión, porque la clave de dispositivo no se serializa en `storageState`. Se mide (CA-14); si se pasa del presupuesto, se reducen flujos e2e, no los parámetros.
+- **Escáner de secretos**: las constantes de prueba deben evitar el patrón de `arda_ci.py` (CA-13).
 
 ### Preguntas abiertas
 - Ninguna para el propietario.

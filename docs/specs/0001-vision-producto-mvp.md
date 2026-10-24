@@ -75,9 +75,9 @@ Cambios documentales que acompañan a esta spec:
 
 ### Almacenamiento y sincronización (ver ADR-0001)
 - **Local-first**: la app trabaja contra una base de datos local en cada dispositivo y funciona **sin conexión**.
-- **Copia maestra** en un **repositorio privado de GitHub separado** del código (`mire-app/start`). Nombre y propietario del repositorio: SPEC-0005.
+- **Copia maestra** en un **repositorio privado de GitHub separado** del código (`mire-app/start`). Nombre y propietario del repositorio: SPEC-0014 (`mire-datos`, en la cuenta personal).
 - Los datos se **cifran en el dispositivo** antes de salir de él (ver CA-12 para el alcance exacto).
-- Las credenciales e integraciones de GitHub que usa Claude Code **no deben tener permisos** sobre el repositorio de datos (se concreta y verifica en SPEC-0005).
+- Las credenciales e integraciones de GitHub que usa Claude Code **no deben tener permisos** sobre el repositorio de datos (se concreta y verifica en SPEC-0014).
 - **Varios dispositivos** (ordenador y móvil), cada uno con su copia local; los cambios se fusionan.
 - Sincronización **cada 5 minutos si hay cambios pendientes**, bajo demanda con un botón **«sincronizar ahora»**, y al ocultar o cerrar la app en la medida en que el navegador lo permita.
 
@@ -147,7 +147,7 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 - **Sincronización multidispositivo**: fusionar cambios y resolver conflictos es la parte más compleja del MVP. Mitigación: la librería se elige en SPEC-0002 y el diseño de fusión y conflictos se hace en SPEC-0008 (p. ej. registro de operaciones en lugar de copias completas).
 - **Sincronización al cerrar**: en web, y sobre todo en móvil, el navegador no garantiza ejecutar código al cerrar. Mitigación: la garantía real es el intervalo de 5 min y el botón; cómo se verifica se concreta en SPEC-0008.
 - **Pérdida de la clave de cifrado**: los datos serían irrecuperables. Mitigación: copia de seguridad de la clave (SPEC-0005).
-- **Token de GitHub en el navegador**: si se filtra, da acceso al repositorio de datos (cifrados). Mitigación: permisos mínimos sobre un solo repositorio (SPEC-0005).
+- **Token de GitHub en el navegador**: si se filtra, da acceso al repositorio de datos (cifrados). Mitigación: token cifrado (SPEC-0005) con permisos mínimos sobre un solo repositorio (SPEC-0014).
 - **Acceso de Claude Code al repositorio de datos**: depende de los permisos de sus tokens y apps de GitHub; se verifica con CA-14.
 - **Coste del alojamiento de la web**: algunas opciones gratuitas (p. ej. GitHub Pages) exigen repositorio público o plan de pago. Se resuelve en SPEC-0002 (CA-17).
 - **Crecimiento del repositorio y ruido de commits** con sincronización cada 5 min. Mitigación: subir solo con cambios, agrupar y compactar.

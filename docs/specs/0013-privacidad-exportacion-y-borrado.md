@@ -36,7 +36,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
 
 ## Cambio (delta)
 ### 1. Exportación (`src/privacy/export.ts`, menú → **«Exportar mis datos…» / «Export my data…»**)
-- **Acceso**: pide la **contraseña maestra o el código de recuperación**, aunque la app esté desbloqueada.
+- **Acceso**: pide la **contraseña maestra o el código de recuperación**, aunque la app esté desbloqueada. El código solo se **verifica**; **no se consume** (solo se invalida al completar una recuperación, SPEC-0014).
 - **Fichero**: genera en el navegador, con `fflate` (MIT, versión exacta), `mire-export-AAAAMMDD.zip`, y lo descarga.
 - **`mire.json`**: `{ format: 'mire-export', version: 1, schemaVersion, exportedAt, tables: { <tabla>: [filas vivas] } }`.
   - Las tablas se **enumeran dinámicamente** desde `sqlite_master` (`type='table'`), excluyendo `schema_migrations` y las `sqlite_%`.
@@ -56,7 +56,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
   - ofrece exportar antes;
   - avisa de que **el token de GitHub sigue vigente** (hay que revocarlo en GitHub) y de que **la copia remota solo se elimina borrando el repositorio `mire-datos`**, con enlace a la guía de SPEC-0014;
   - pide la **contraseña maestra o el código de recuperación** y escribir **`BORRAR`** (en inglés, **`DELETE`**).
-- **Comprobación previa**: si hay otra pestaña de Míre abierta, se detecta con un `BroadcastChannel('mire')` y un *ping* con un plazo de 500 ms. En ese caso se cancela con «Cierra las otras pestañas de Míre e inténtalo de nuevo», sin borrar nada.
+- **Comprobación previa**: si hay otra pestaña de Míre abierta, se detecta con un `BroadcastChannel('mire')` y un *ping* con un plazo de 500 ms. **Toda** pestaña de `index.html` responde al *ping* desde el arranque, incluidas las bloqueadas y la que muestra el aviso de SPEC-0002; el que responde se monta fuera de `SecurityGate`. En ese caso se cancela con «Cierra las otras pestañas de Míre e inténtalo de nuevo», sin borrar nada.
 - **Acción, en orden**. Si cualquier paso falla, **se detiene** sin pasar a los siguientes, y la clave solo se destruye si todo lo anterior ha ido bien:
   1. el worker de la base de datos llama a `wipeFiles()` del pool `opfs-sahpool` y a `removeVfs()`; después se termina el worker;
   2. se borran las claves `mire.*` de `localStorage`;
@@ -104,7 +104,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
    - el `.zip` contiene `mire.json` y los 4 CSV;
    - las claves de `tables` son exactamente las tablas de SPEC-0004 menos `schema_migrations`;
    - el movimiento borrado no aparece;
-   - `movimientos.csv` empieza por BOM, la celda del concepto peligroso es `'=HYPERLINK(""http://x"";""y"")`, entrecomillada según RFC 4180, `Café; "bueno"` aparece como `"Café; ""bueno"""`, y el importe aparece como `-51,56` **sin** `'`, con la fecha `05/09/2026`;
+   - `movimientos.csv` empieza por BOM, el campo CSV del concepto peligroso es exactamente `"'=HYPERLINK(""http://x"";""y"")"` (prefijo `'` y entrecomillado RFC 4180), `Café; "bueno"` aparece como `"Café; ""bueno"""`, y el importe aparece como `-51,56` **sin** `'`, con la fecha `05/09/2026`;
    - ningún fichero contiene `github_pat_` ni el anillo de claves.
 2. **CA-02** · e2e de exportación:
    - con una contraseña errónea no hay descarga;

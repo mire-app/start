@@ -32,7 +32,7 @@
 4. SPEC-0004 — Data model, DB API and domain (balances, net worth). No UI.
 5. SPEC-0011 — Import engines xlsx/CSV (BBVA, MyInvestor movements, generic), with ADR-0004. No UI.
 6. SPEC-0012 — MyInvestor portfolio PDF reader and local `import:check`.
-7. SPEC-0005 — Security: encryption, keys, unlock (master password, recovery code, 4-digit PIN), token, CSP (with ADR-0005).
+7. SPEC-0005 — Security: encryption, keys, unlock (master password, recovery code, 4-digit PIN), auto-lock, encrypted token (with ADR-0005).
 8. SPEC-0014 — Security: recovery, security settings, CSP/anti-framing, data repo setup guide.
 9. SPEC-0013 — Privacy: export, erase, privacy notice, zero telemetry.
 10. SPEC-0006 — Accounts, transactions, transfers and investments.

@@ -35,13 +35,13 @@ Completar la seguridad de SPEC-0005 con:
 - **Guardado**: el anillo nuevo se guarda de forma **atómica al terminar el paso 4**. Hasta entonces el código anterior sigue valiendo.
 
 ### 2. Diálogo «Seguridad…» (menú de `TopBar` → **«Seguridad…» / «Security…»**)
-- **Cambiar PIN**: pide el PIN actual y el nuevo dos veces.
+- **Cambiar PIN**: pide el PIN actual y el nuevo dos veces. El PIN actual se verifica con `unlockWithPin`, de modo que **cuenta como intento** y aplica el límite de 5 fallos.
 - **Cambiar contraseña maestra**: pide la actual y la nueva dos veces; reenvuelve la DEK.
 - **Regenerar código de recuperación**: pide la contraseña, muestra el código nuevo y exige confirmación; el anterior deja de valer al confirmar.
 - **Token de GitHub**: estado con `tokenStatus()` (configurado sí o no, y fecha de caducidad). La configuración del token es de SPEC-0008.
 
 ### 3. CSP y endurecimiento (solo en la build de producción)
-- Un **plugin de Vite** procesa **todos** los `.html` de `dist/` e inserta, como **primer hijo de `<head>`**:
+- Un **plugin de Vite** usa `transformIndexHtml` con `order: 'post'` en **todas** las entradas HTML (así el *precache* de vite-plugin-pwa ve el HTML final) e inserta, como **primer hijo de `<head>`**:
 
   ```
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-<hash de cada script en línea de esa página>'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.github.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
@@ -84,8 +84,9 @@ Completar la seguridad de SPEC-0005 con:
    - el estado del token muestra «No configurado».
 3. **CA-03** · CSP (e2e sobre la build):
    - todos los `.html` de `dist/` tienen la meta CSP como primer hijo de `<head>`, con el hash correcto de sus scripts en línea;
+   - la revisión de cada HTML en el manifiesto de *precache* coincide con el hash del fichero final de `dist/`;
    - al recorrer configuración, desbloqueo, pantalla de inicio, guía de estilo y recuperación **no** hay eventos `securitypolicyviolation`, SQLite WASM funciona y el service worker se registra.
-4. **CA-04** · Cargada dentro de un `iframe` de otra página de prueba, la app muestra el aviso de antienmarcado y no renderiza la pantalla de inicio.
+4. **CA-04** · Cargada dentro de un `iframe` (página creada con `page.setContent` con un `<iframe src>` a la URL de la app), la app muestra el aviso de antienmarcado y no renderiza la pantalla de inicio.
 5. **CA-05** · axe sin infracciones en la recuperación y en el diálogo «Seguridad…», en claro y en oscuro; sin scroll horizontal a 375 px.
 6. **CA-06** · `docs/setup-datos.md` contiene los pasos del punto 4.
    - **El propietario** crea `mire-datos` y el token.

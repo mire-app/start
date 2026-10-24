@@ -36,7 +36,7 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
 ## Cambio (delta)
 ### 1. Lector PDF (`source = 'myinvestor_pdf'`, `src/import/pdf/`)
 - **Detección**: un fichero que empieza por `%PDF-` y contiene, en algún punto, el texto «Posiciones» seguido de una fila de cabeceras con `Código`, `Nombre`, `Divisa`, `Títulos` y `Valor de mercado EUR`. Si no se cumple, da el error `pdf_layout_unknown`.
-- **Extracción**: pdf.js devuelve el texto de cada página con sus coordenadas `(x, y)`.
+- **Extracción**: pdf.js devuelve el texto de cada página con sus coordenadas `(x, y)`. Se usa siempre con **`isEvalSupported: false`**, por la CSP de SPEC-0014.
 - **Cabeceras**: pueden ocupar dos líneas (`Valor de` / `mercado EUR`). Los textos de la banda vertical de la cabecera se unen por columna, por proximidad en x. `Valor de mercado` y `Valor de mercado EUR` son columnas distintas: la de EUR es la que termina en `EUR`.
 - **Columnas**:
   - cada columna se identifica por el **centro en x** de su cabecera;
