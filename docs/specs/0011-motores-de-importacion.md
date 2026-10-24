@@ -51,7 +51,7 @@ Las librerías se cargan bajo demanda (ADR-0004). Todo se ejecuta **dentro del w
    - `source` y `file_sha256`;
    - filas normalizadas `{ row, sourceKey, date, valueDate?, amountCents, description, note?, sourceCategory?, balanceCents? }`;
    - errores por fila `{ row, code }`;
-   - avisos de fichero, como `balance_chain_mismatch`;
+   - las filas se devuelven **en el orden del fichero**; el orden cronológico y el aviso `balance_chain_mismatch` los calcula `resolve`;
    - **`accounts`**: una entrada por `sourceKey` distinta, `{ sourceKey, linkedAccountId?, proposal: { name, type, institution } }`. Se calcula consultando `source_link` en la base del worker. Si hay enlace, el asistente asigna por defecto la cuenta enlazada; si no, propone `proposal`.
 2. **`resolve(parsed, assignments)`** produce el **`ImportPlan`**. `assignments` dice, para cada `sourceKey`, `{ accountId }` o `{ create: { name, type, institution } }`.
 3. **`commit(plan, decisions)`** guarda el lote.
@@ -141,7 +141,7 @@ Para cada fila, ya con su cuenta asignada o la cuenta nueva con un **id provisio
 
 **Decisiones**:
 - por fila: `include`, `categoryId?` y `kind` (`regular` | `external`);
-- por sugerencia de traspaso: aceptada sí o no;
+- por sugerencia de traspaso: aceptada sí o no. Si se excluye (`include=false`) una fila de un par aceptado, el traspaso no se aplica y la otra fila se importa como `regular`;
 - por cuenta: `opening: { accept, cents? }`, con valor editable.
 
 **Efectos**:
@@ -226,7 +226,7 @@ Todos son tests de Vitest en Node con SQLite en memoria (SPEC-0004) y los ficher
    - la fila 9, leída de una celda de fecha, da `2026-09-20`;
    - la tabla resumen no produce filas.
 2. **CA-02** · MyInvestor:
-   - los dos ficheros (ascendente y descendente) producen las 4 filas en el **mismo orden cronológico** (`+50000`, `+12000`, `−20000`, `+49`);
+   - el **plan** (`resolve`) de los dos ficheros (ascendente y descendente) tiene las 4 filas en el **mismo orden cronológico** (`+50000`, `+12000`, `−20000`, `+49`);
    - la apertura sugerida es **10000** el `2026-09-12`;
    - ningún campo del plan contiene `TITULAR EJEMPLO` ni `ES00`.
 3. **CA-03** · Cuentas:
@@ -259,7 +259,8 @@ Todos son tests de Vitest en Node con SQLite en memoria (SPEC-0004) y los ficher
     - `corrupto.xlsx` da `unreadable_file`;
     - el test construye **en memoria con ExcelJS** un informe con el formato BBVA y dos filas, una de ellas con fecha `31/02/2026`. Esa fila da el error `invalid_date` sin abortar la otra, y el error no contiene el texto de la celda;
     - `revert` de un lote ya revertido da `already_reverted`;
-    - `commit` con `kind='external'` en una fila negativa da `external_requires_positive` y no escribe nada.
+    - `commit` con `kind='external'` en una fila negativa da `external_requires_positive` y no escribe nada;
+    - si entre `resolve` y `commit` se inserta (vía repositorio) un movimiento con la misma huella que una fila del plan, esa fila se devuelve como `duplicate_at_commit` y no se inserta.
 12. **CA-12** · `pnpm build:fixtures` regenera ficheros cuyo **contenido leído** (celdas y filas) coincide con los versionados; un test compara lo leído, no los bytes.
 13. **CA-13** · `.arda/checks.sh` completo sigue por debajo de 5 minutos.
 

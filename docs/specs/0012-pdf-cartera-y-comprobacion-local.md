@@ -75,6 +75,8 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
   1. marca `deleted_at` en las valoraciones del lote;
   2. **restaura** (`deleted_at = NULL`, `deleted_by_batch_id = NULL`) las valoraciones que ese lote había reemplazado.
 
+  Los lotes se deshacen en orden inverso: si una valoración fue reemplazada por un lote posterior que sigue vivo, `revert` del lote anterior da `revert_blocked_by_later_batch` (hay que deshacer antes el posterior).
+
   Así se cumple SPEC-0001 CA-21.
 
 ### 3. PDF sintético (`tools/build-fixtures.ts`, ampliado; pdf-lib)
@@ -88,6 +90,8 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
 | 4 | Una cuarta posición, como continuación de la tabla **sin cabecera repetida** |
 | 5 | Texto legal genérico |
 
+Las columnas «Precio medio posicion» y «Valor de mercado» también existen en el fixture, con valores inventados cualesquiera que el lector ignora.
+
 | Código | Nombre | Divisa | Títulos | Valor de mercado EUR |
 |---|---|---|---|---|
 | LU0000000001 | FONDO EJEMPLO RENTA VARIABLE GLOBAL | EUR | 19.61 | 2.450,1234 € |
@@ -100,7 +104,8 @@ Variantes:
 - `myinvestor-extracto-v2.pdf`: el mismo documento con la primera posición a `2.500,0000 €`;
 - `sin-posiciones.pdf`: solo las páginas 1, 2 y 5.
 
-### 4. Comprobación local (`tools/import-check.ts`, `pnpm import:check <fichero>`)
+### 4. Comprobación local (`tools/import-check.ts`, `pnpm import:check <fichero> [--plantilla <fichero.json>]`)
+- `--plantilla` recibe un JSON con la forma de `import_template.settings` (SPEC-0011), para validar ficheros de bancos sin formato predefinido.
 - Ejecuta `read` (SPEC-0011 y esta spec) en Node, contra una base vacía en memoria, sobre el fichero indicado. **No escribe en ninguna base persistente.**
 - **Código de salida**: `0` si `read` termina, aunque haya errores de fila; `2` si hay un error de fichero (`xls_not_supported`, `unreadable_file`, `unknown_format`, `pdf_layout_unknown`), que se imprime como código.
 - **Imprime solo**:
@@ -141,8 +146,8 @@ Tests de Vitest en Node, salvo CA-07.
 4. **CA-04** · `myinvestor-extracto-sin-fecha.pdf` produce `valuationDate = null`, y el `commit` sin `decisions.valuationDate` falla con `valuation_date_required`.
 5. **CA-05** · `sin-posiciones.pdf` da `pdf_layout_unknown`.
 6. **CA-06** · `pnpm import:check` sobre cada fichero sintético de SPEC-0011 y de esta spec:
-   - termina con **código 0** en los válidos (incluido `myinvestor-extracto-sin-fecha.pdf`, que imprime «fecha de valoración: no») e imprime el formato correcto;
-   - termina con **código 2** e imprime el código de error en `antiguo.xls`, `corrupto.xlsx` y `sin-posiciones.pdf`;
+   - termina con **código 0** en los válidos e imprime el formato correcto. Esto incluye `myinvestor-extracto-sin-fecha.pdf`, que imprime «fecha de valoración: no», y `generico-latin1.csv` y `generico.xlsx` con `--plantilla` apuntando a la plantilla de SPEC-0011 CA-10 (guardada como `src/import/__fixtures__/plantilla-generico.json`);
+   - termina con **código 2** e imprime el código de error en `antiguo.xls`, `corrupto.xlsx` y `sin-posiciones.pdf`, y también en `generico-latin1.csv` **sin** `--plantilla` (`unknown_format`);
    - un test comprueba que su salida **no contiene** ningún concepto, importe, saldo, ISIN, alias (`DIARIO`, `AHORRO`), `TITULAR EJEMPLO` ni `ES00` de esos ficheros.
 7. **CA-07** · **El propietario** ejecuta `pnpm import:check` en su ordenador sobre sus tres ficheros reales (informe de BBVA, movimientos de MyInvestor y extracto PDF) y confirma que se detecta el formato correcto **sin errores de fila**. Es condición para marcar esta spec como `implemented`.
 8. **CA-08** · `.arda/checks.sh` completo sigue por debajo de 5 minutos.
@@ -150,7 +155,7 @@ Tests de Vitest en Node, salvo CA-07.
 ## Riesgos y preguntas abiertas
 ### Riesgos
 - **Maquetación real**: el PDF sintético imita las capturas, pero las tolerancias de x e y solo se validan de verdad con el PDF real (CA-07). Si falla, el propietario comparte el resumen de `import:check` (sin datos), y se ajusta en una nueva iteración de Refinar.
-- **Páginas 4 y 5 no vistas**: pueden contener más posiciones u otras tablas. El lector termina la tabla en el siguiente título.
+- **Páginas 4 y 5 no vistas**: pueden contener más posiciones u otras tablas. El lector termina la tabla en la última fila con ISIN.
 - **pdf.js en el navegador**: su worker debe estar en el *precache* (ADR-0004). Lo verificará el e2e de SPEC-0010.
 
 ### Preguntas abiertas

@@ -56,7 +56,7 @@ Es la primera de tres specs de datos e importación:
   - la operación *abrir* de SPEC-0002, con su reintento de ~1 s y el aviso «Míre ya está abierto en otra pestaña», **se conserva**;
   - ahora abre las dos bases, y si cualquiera de ellas está bloqueada por otra pestaña, se muestra el mismo aviso;
   - SPEC-0002 CA-08 debe seguir pasando sin cambios.
-- **ESLint**: `no-restricted-imports` (con `allowTypeImports: true`) impide importar **valores** de `src/db/worker*` y `src/db/sql*` fuera de `src/db/`. Fuera de ahí solo se usa `client.ts` y, como tipo, `SqlDb` (`import type`), para el código que el worker ejecuta, como `src/import/`.
+- **ESLint**: `no-restricted-imports` (con `allowTypeImports: true`) impide importar **valores** de `src/db/worker*` y `src/db/sql*` fuera de `src/db/`, tanto por el alias `@/db/…` como por rutas relativas. Fuera de ahí solo se usa `client.ts` y, como tipo, `SqlDb` (`import type`), para el código que el worker ejecuta, como `src/import/`.
 
 ### 2. Migraciones
 - Ficheros `src/db/migrations/NNNN_nombre.sql`, cargados con `import.meta.glob` (en Node, con lectura de ficheros).
@@ -88,7 +88,7 @@ Además de las columnas comunes:
 | `category` | `parent_id, system_key, name, archived_at` | FK `parent_id`; triggers `BEFORE INSERT/UPDATE` que lanzan `RAISE(ABORT,'category_depth')` si `parent_id` apunta a una categoría que ya tiene padre, **o** si se da padre a una categoría que ya tiene hijos vivos |
 | `category_map` | `source, source_category, category_id` | `UNIQUE(source, source_category)` parcial, FK |
 | `movement` | `account_id, date, value_date, amount_cents, description, note, kind, category_id, transfer_group_id, import_batch_id, fingerprint, source_category` | `CHECK(amount_cents <> 0)`, `CHECK(kind IN ('regular','transfer','external'))`, `CHECK(kind <> 'external' OR amount_cents > 0)`, `CHECK((kind = 'transfer') = (transfer_group_id IS NOT NULL))`, FKs; índices `(account_id, date)` y `fingerprint` |
-| `valuation` | `account_id, date, value_cents, units, import_batch_id, deleted_by_batch_id` | Trigger: la cuenta debe ser `investment` (`RAISE(ABORT,'valuation_account_type')`); `UNIQUE(account_id, date)` parcial |
+| `valuation` | `account_id, date, value_cents, units, import_batch_id, deleted_by_batch_id` (FK a `import_batch`) | Trigger: la cuenta debe ser `investment` (`RAISE(ABORT,'valuation_account_type')`); `UNIQUE(account_id, date)` parcial |
 | `import_batch` | `source, file_name, file_sha256, row_count, imported_count, duplicate_count, reverted_at` | — |
 | `import_template` | `name, format, settings` | `CHECK(format IN ('csv','xlsx'))`; `settings` es un JSON (lo define SPEC-0011) |
 | `balance_check` | `account_id, date, expected_cents, computed_cents, source, import_batch_id` | `CHECK(source IN ('file','user'))` |
