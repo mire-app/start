@@ -59,7 +59,7 @@ Dar al propietario control sobre sus datos, como pide el RGPD:
 - **Comprobación previa**: si hay otra pestaña de Míre abierta, se detecta con un `BroadcastChannel('mire')` y un *ping* con un plazo de 500 ms. **Toda** pestaña de `index.html` responde al *ping* desde el arranque, incluidas las bloqueadas y la que muestra el aviso de SPEC-0002; el que responde se monta fuera de `SecurityGate`. En ese caso se cancela con «Cierra las otras pestañas de Míre e inténtalo de nuevo», sin borrar nada.
 - **Acción, en orden**. Si cualquier paso falla, **se detiene** sin pasar a los siguientes, y la clave solo se destruye si todo lo anterior ha ido bien:
   1. el worker de la base de datos llama a `wipeFiles()` del pool `opfs-sahpool` y a `removeVfs()`; después se termina el worker;
-  2. se borran las claves `mire.*` de `localStorage`;
+  2. se borran las claves `mire.*` de `localStorage` y de `sessionStorage`;
   3. se borran las cachés del *service worker* salvo la de la estructura de la app;
   4. se cierran las conexiones a `mire-keys` y `indexedDB.deleteDatabase('mire-keys')`; un evento `blocked` cuenta como fallo. Es la **destrucción de la clave en este dispositivo**.
 - **Resultado**: la app recarga y muestra la bienvenida de SPEC-0005.

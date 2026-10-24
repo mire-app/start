@@ -50,18 +50,18 @@ Desde cada dato se llega a los movimientos que lo explican.
    - Si no hay mes anterior con datos, la línea no aparece.
 2. Tarjeta de sincronización (SPEC-0020), si procede.
 3. **Evolución** (punto 2).
-4. **Este mes** (punto 3).
+4. **Resumen del mes** (punto 3).
 5. **Reparto por tipo** (punto 4).
 6. Grupos y cuentas (SPEC-0006), sin cambios.
 
 **Sin datos**: Inicio sigue mostrando solo el estado vacío de SPEC-0006.
 
 **Textos que no se repiten con SPEC-0006**:
-- los encabezados del panel («Evolución», «Este mes», «Reparto por tipo») no contienen «Patrimonio» ni «Ahorro»;
+- las secciones del panel son regiones con nombre (`<section aria-labelledby>`), con los encabezados «Evolución», «Resumen del mes» y «Reparto por tipo». No contienen «Patrimonio» ni «Ahorro», y en inglés no contienen «Net worth» ni «Savings»;
 - la cifra del mes se llama **«Ahorrado»**;
 - por defecto no se renderiza ningún importe de cuenta, grupo o tipo: el valor de un punto del gráfico solo aparece al enfocarlo o señalarlo, la tabla alternativa al pedirla, y el reparto por tipo al desplegarlo.
 
-**Recalcular**: el cliente de la base de datos (`src/db/client.ts`) emite `dataChanged` tras cada llamada que escribe y tras cada fusión de la sincronización (SPEC-0008). Inicio vuelve a pedir el panel al montarse y con ese evento.
+**Recalcular**: el cliente de la base de datos (`src/db/client.ts`) emite `dataChanged` tras cada llamada marcada como escritura en el mapa de la API (SPEC-0004) y cuando el worker avisa de que terminó una fusión (SPEC-0008). Inicio vuelve a pedir el panel al montarse y con ese evento.
 
 ### 2. Evolución del patrimonio
 **Serie** (`src/domain/dashboard.ts`, puro): `netWorthSeries(accounts, movements, valuations, fromMonth, today)` → `{ month: 'AAAA-MM', cents }[]`.
@@ -73,7 +73,7 @@ Desde cada dato se llega a los movimientos que lo explican.
 - se guarda en `localStorage` con la clave `mire.panel.periodo`;
 - «6 meses» y «1 año» son los últimos 6 o 12 meses, incluido el actual.
 
-**Gráfico** (`src/components/charts/AreaChart.tsx`, SVG en un `<figure>` con el título visible «Evolución»):
+**Gráfico** (`src/components/charts/AreaChart.tsx`, SVG en un `<figure>` dentro de la región «Evolución»; el encabezado de la región es su único título visible):
 - **Colores**, solo tokens de SPEC-0003, iguales en claro y en oscuro:
   - la línea, de 2 px, en `positive` (≥ 4,5:1);
   - el relleno, decorativo, en `chart-1` al 40 %;
@@ -94,14 +94,14 @@ Desde cada dato se llega a los movimientos que lo explican.
 - **Movimiento**: el área entra con una transición `slow` (350 ms), salvo si se pide reducir movimiento. La detección es la de `navigate` de SPEC-0003, extraída a `prefersReducedMotion()` en `src/design/motion.ts` sin cambiar su comportamiento.
 - **Un solo mes con datos**: en lugar del gráfico, «La evolución aparecerá cuando tengas datos de más de un mes».
 
-### 3. Este mes
+### 3. Resumen del mes
 **Meses disponibles**: desde el mes más antiguo con algún movimiento que **cuenta** (`countsAsIncomeOrExpense`) hasta el mes actual.
 - Por defecto se muestra el mes actual si tiene movimientos que cuentan; si no, el más reciente que los tenga.
 - Si no hay ninguno (p. ej. solo se ha importado la cartera en PDF), la sección muestra «Aún no hay ingresos ni gastos», sin selector.
 
 **Selector**:
 - botones **«Mes anterior»** y **«Mes siguiente»** (deshabilitados en los extremos), con el mes en una región `aria-live="polite"`;
-- el mes elegido se guarda en `sessionStorage` (`mire.panel.mes`), así que se conserva al volver de Movimientos.
+- el mes elegido se guarda en `sessionStorage` (`mire.panel.mes`), así que se conserva al volver de Movimientos. No es un dato sensible y caduca con la pestaña; aun así, el borrado de SPEC-0013 también lo elimina.
 
 **Cifras** (`monthlySummary(movements, categories, month)`, puro), solo con los movimientos que cuentan:
 
@@ -135,7 +135,7 @@ Desde cada dato se llega a los movimientos que lo explican.
 **Métodos nuevos** (`src/db/repo/queries.ts`, que llaman al dominio):
 - `dashboard.series({ period, today })` → `{ month, cents }[]`;
 - `dashboard.month({ month?, today })` → `{ month, months: string[], incomeCents, expenseCents, savedCents, byCategory: { expense: Row[], income: Row[] } }`.
-  - `month` es el mes resuelto (el pedido, o el de por defecto si no se pasa).
+  - `month` es el mes resuelto (el pedido, o el de por defecto si no se pasa), o `null` si `months` está vacío.
   - `Row = { categoryId: string | null, cents: number, sharePermille: number }`.
 - `dashboard.byType({ today })` → `{ type, cents, sharePermille }[]`.
 
@@ -155,13 +155,13 @@ Desde cada dato se llega a los movimientos que lo explican.
 ## Criterios de aceptación
 **Condiciones de los e2e**:
 - `page.clock.install({ time: new Date('2026-10-24T12:00:00') })`, en hora local;
-- cada CA arranca en un contexto nuevo, así que `mire.panel.*` empieza vacío;
-- las comprobaciones de texto se acotan a la región o sección de cada CA.
+- cada CA arranca en un contexto nuevo, así que `mire.panel.*` empieza vacío; la excepción es CA-06, que continúa en el contexto de CA-04;
+- las comprobaciones de texto se acotan a la región de cada CA, con `toContainText` y espacios normalizados (los importes y porcentajes llevan espacio duro).
 
 **Ficheros e2e** (como máximo 3):
 - `panel-ejemplo.spec.ts`, con los datos de ejemplo de SPEC-0016: CA-03 y CA-05;
 - `panel-bbva.spec.ts`, con `bbva-informe.xlsx` importado mediante SPEC-0010 (traspaso de las filas 2 y 3 activado y siembra de SPEC-0007): CA-04 y CA-06;
-- `panel-a11y.spec.ts`: CA-10.
+- `panel-a11y.spec.ts`: CA-10, con los datos de ejemplo.
 
 1. **CA-01** · Serie (Vitest), con los datos de ejemplo de SPEC-0016:
    - con «Todo» y `today = 2026-10-24`, da `[{ 2026-09, 794844 }, { 2026-10, 1186640 }]`;
@@ -184,7 +184,7 @@ Desde cada dato se llega a los movimientos que lo explican.
    - «Ver como tabla» muestra 2 filas;
    - con «6 meses» siguen 2 puntos, y el periodo elegido se conserva al recargar.
    - Cubre SPEC-0001 CA-09 (evolución mensual).
-4. **CA-04** · Este mes (e2e, dentro de la sección «Este mes»):
+4. **CA-04** · Resumen del mes (e2e, dentro de la región «Resumen del mes»):
    - abre en septiembre de 2026, porque octubre no tiene movimientos;
    - muestra Ingresos `+2.015,00 €`, Gastos `−676,56 €` y Ahorrado `+1.338,44 €`;
    - las barras de gastos son «Sin categoría», «Transporte» y «Ocio», en ese orden, con «91,6 %»;
@@ -197,7 +197,8 @@ Desde cada dato se llega a los movimientos que lo explican.
    - Cubre SPEC-0001 CA-09 (reparto por tipo).
 6. **CA-06** · Enlace a Movimientos (e2e, a continuación de CA-04):
    - en septiembre, pulsar «Transporte» lleva a `#/movimientos?mes=2026-09&tipo=gasto&categoria=<id de Transporte>`, con 1 movimiento, «GASOLINERA EJEMPLO»;
-   - al volver con «atrás», «Este mes» sigue en septiembre.
+   - al volver con «atrás», «Resumen del mes» sigue en septiembre;
+   - «Sin categoría» lleva a `…&tipo=gasto&categoria=sin`, con 2 movimientos, y en «Ingresos», «Salarios, rentas y subsidios» lleva a `…&tipo=ingreso&categoria=<id>`, con 1.
 7. **CA-07** · `AreaChart` (Vitest de componente):
    - con 1 punto muestra el mensaje en lugar del gráfico;
    - con `prefersReducedMotion()` simulado a verdadero no hay transición;
@@ -205,7 +206,9 @@ Desde cada dato se llega a los movimientos que lo explican.
    - el `aria-label` del SVG resume el primero y el último;
    - con valores negativos aparece la línea del 0.
 8. **CA-08** · Textos (Vitest de componente en inglés): el periodo muestra «6 months», «1 year» y «All», y la cifra del mes, «Saved». `src/i18n/keys.test.ts` pasa.
-9. **CA-09** · Borrado (Vitest): las claves `mire.panel.periodo` y `mire.panel.mes` siguen el patrón `mire.*` que borra SPEC-0013.
+9. **CA-09** · Borrado y recálculo (Vitest):
+   - tras el borrado de SPEC-0013 no quedan `mire.panel.periodo` (localStorage) ni `mire.panel.mes` (sessionStorage);
+   - el cliente emite `dataChanged` tras una llamada marcada como escritura en el mapa de la API y tras el mensaje de fusión del worker (SPEC-0008), y no lo emite tras una lectura.
 10. **CA-10** · axe sin infracciones en Inicio con el panel (con un punto enfocado, la tabla visible y el reparto desplegado), en claro y en oscuro; sin scroll horizontal a 375 px. Cubre SPEC-0001 CA-16.
 11. **CA-11** · Sin regresiones:
     - los e2e de SPEC-0006 (CA-04 a CA-06), SPEC-0010 (CA-01) y SPEC-0020 (CA-02), que comprueban importes en Inicio, pasan sin modificarse con el panel presente;
