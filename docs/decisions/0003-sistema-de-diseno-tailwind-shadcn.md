@@ -1,7 +1,7 @@
 ---
 id: ADR-0003
 title: Sistema de diseño con Tailwind, shadcn/ui, Material Symbols Rounded, Sora autoalojada y Motion
-status: proposed       # proposed → accepted (solo una persona) → superseded
+status: accepted       # proposed → accepted (solo una persona) → superseded
 summary: UI con Tailwind CSS y componentes shadcn/ui (Radix), iconos Material Symbols Rounded en SVG, Sora autoalojada vía Fontsource, y transiciones con View Transitions y Motion
 ---
 
