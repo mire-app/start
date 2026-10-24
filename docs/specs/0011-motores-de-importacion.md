@@ -65,7 +65,7 @@ Las librerías se cargan bajo demanda (ADR-0004). Todo se ejecuta **dentro del w
 - **`.xls`** (firma OLE `D0 CF 11 E0`, sea cual sea la extensión): error `xls_not_supported`, con el mensaje traducido «Guarda el fichero como .xlsx (Excel → Guardar como) e impórtalo de nuevo».
 - **`.xlsx` ilegible**: `unreadable_file`.
 - **Formato no reconocido** sin plantilla: `unknown_format`.
-- **Plantilla que no encaja**: si falta en la fila `headerRow` alguna cabecera que usa la plantilla, el error es `template_mismatch`.
+- **Plantilla que no encaja**: si falta en la fila `headerRow` alguna cabecera que usa la plantilla, o si en un `.xlsx` no existe la hoja `sheet`, el error es `template_mismatch`.
 - **Fila ilegible**: no aborta el fichero; produce un error de fila con código (`invalid_amount`, `invalid_date`, `empty_required`), **sin el texto de la celda**.
 
 ### 3. BBVA (`source = 'bbva_report'`)
@@ -106,7 +106,7 @@ Las librerías se cargan bajo demanda (ADR-0004). Todo se ejecuta **dentro del w
 - **Enlaces de cuenta**: los `source_link` de los genéricos usan siempre `source = 'generic'`, sea el fichero CSV o `.xlsx`, con `sourceKey = template:<id de la plantilla>`. Así una cuenta enlazada con un CSV se reconoce también con un `.xlsx` de la misma plantilla.
 - **Cuenta nueva propuesta**: `{ name: template.name, type: 'checking', institution: template.name }`.
 - **Celdas en bruto**: `Cell = string | number | Date | null`. En CSV todas son texto. En `.xlsx`, ExcelJS da `number` en las celdas numéricas, `Date` en las de fecha y texto en las demás. `parseDate` acepta una `Date` sea cual sea `dateFormat`, y `parseAmount` acepta un `number` sea cual sea `decimal`. `import.preview` (SPEC-0017) devuelve estas mismas celdas, que se pueden clonar entre el worker y la página.
-- **`normalizeRows(rawRows: Cell[][], settings)`**: función **pura y exportada** que aplica una plantilla a filas en bruto. Devuelve por fila `{ ok: true, date, valueDate?, description, amountCents, balanceCents?, sourceCategory? }` o `{ ok: false, row, code }`. La usan el lector genérico y la vista previa de SPEC-0017.
+- **`normalizeRows(rawRows: Cell[][], settings)`**: función **pura y exportada** que aplica una plantilla a filas en bruto. Devuelve por fila `{ ok: true, date, valueDate?, description, amountCents, balanceCents?, sourceCategory? }` o `{ ok: false, row, code }`, donde `row` es el índice dentro de `rawRows` (desde 1); el lector calcula `sheetRow` a partir de él. La usan el lector genérico y la vista previa de SPEC-0017.
 - **CSV**: se decodifica UTF-8 estricto y, si falla, `windows-1252`. El separador (`;`, `,`, tabulador) se detecta solo o lo fija la plantilla.
 - **Plantilla** (`import_template.settings`, JSON):
   - el **formato lo determina el fichero**, no la plantilla;
@@ -121,7 +121,7 @@ Las librerías se cargan bajo demanda (ADR-0004). Todo se ejecuta **dentro del w
 - **Guardar una plantilla**: no hay un método aparte. Se guarda **dentro de `commit`**, con la decisión `saveTemplate: { id, name, settings }`, cuyo `id` es un UUIDv7 que genera el cliente antes de leer, para poder usar `template:<id>` como clave. Así no se escribe nada antes de confirmar.
   - `saveTemplate` es un **upsert por `id`**: si la plantilla ya existe (viva), actualiza `name` y `settings`; si no, la crea. Así «Cambiar mapeo» de una plantilla reconocida conserva su `id` y su enlace `template:<id>`.
   - `saveTemplate.id` debe coincidir con `plan.templateId`; si no, da `template_invalid`.
-- **Plantilla usada**: el plan lleva `templateId` (copiado del `ParsedFile`). Al confirmar, si la plantilla `templateId` existe después de `saveTemplate`, se actualiza su `last_used_at` a la hora del `commit`. `last_used_at` es NULL hasta el primer uso.
+- **Plantilla usada**: el plan lleva `templateId` (copiado del `ParsedFile`). Al confirmar, si la plantilla `templateId` existe después de `saveTemplate`, se actualiza su `last_used_at` a la hora del `commit`. `last_used_at` es NULL hasta el primer uso. Desde la app no se llega a ver NULL, porque guardar y usar ocurren en el mismo `commit`; es un estado posible solo desde el repositorio.
 - **Plantilla no guardada**: si se leyó con una plantilla que no existe y no se manda `saveTemplate`, se importa igualmente, pero **no** se crea el `source_link` `('generic', template:<id>)`: no habría plantilla que lo reutilizara.
 - **Repositorios**: `saveTemplate` (upsert) y `touchTemplate` están en `src/db/repo/templates.ts`; SPEC-0017 añade allí la lista, el renombrado y el borrado.
 
@@ -190,7 +190,7 @@ type Decisions = {
 - una plantilla inválida, o cuyo `id` no es `plan.templateId`, da `template_invalid`;
 - un traspaso aceptado con un lado del plan cuya fila no está incluida da `transfer_side_excluded`.
 
-**Comprobación de duplicados en la confirmación**: dentro de la transacción, se vuelve a comprobar la huella **solo de las filas que no eran `duplicate` en el plan**. Si ya existe (la base cambió desde `resolve`), esa fila no se inserta y se devuelve en `duplicateAtCommit`. Las filas `duplicate` que el usuario incluye a propósito **sí** se insertan.
+**Comprobación de duplicados en la confirmación**: dentro de la transacción, se vuelve a comprobar la huella **solo de las filas que no eran `duplicate` en el plan**. Si ya existe (la base cambió desde `resolve`), esa fila no se inserta y se devuelve en `duplicateAtCommit`. Las filas `duplicate` que el usuario incluye a propósito **sí** se insertan. Si una fila de `duplicateAtCommit` estaba en un traspaso aceptado, ese traspaso no se aplica y la otra fila se inserta como `regular`. Las filas de `duplicateAtCommit` cuentan en `duplicate_count`.
 
 **Nada que importar**: si no hay filas incluidas, ni cuentas que crear, ni valoraciones, devuelve `nothing_to_import` sin crear lote.
 

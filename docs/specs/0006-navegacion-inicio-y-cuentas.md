@@ -48,7 +48,7 @@ Dar a Míre su navegación y sus dos primeras pantallas de uso:
   | Importar / Import | `upload_file` |
 
   - Respeta `env(safe-area-inset-bottom)` y cada objetivo mide ≥ 44 × 44 px.
-  - Aparece en todas las rutas salvo `#/ajustes`, a la que se llega desde el menú de `TopBar`; desde Ajustes se vuelve con el logotipo o con «atrás» (SPEC-0016).
+  - Aparece en todas las rutas salvo `#/ajustes` y sus subrutas (p. ej. `#/ajustes/categorias`, SPEC-0007), a las que se llega desde el menú de `TopBar`; desde Ajustes se vuelve con el logotipo o con «atrás» (SPEC-0016).
 - **Escritorio** (≥ 768 px): las 4 secciones como enlaces dentro de `TopBar`, sin barra inferior.
 - **Sección activa**: `aria-current="page"` y color `accent`.
 

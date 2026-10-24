@@ -67,7 +67,7 @@ Importar extractos de **cualquier banco** que exporte CSV o `.xlsx`:
 
 #### Vista previa en vivo
 - `normalizeRows` (SPEC-0011) sobre las celdas de las filas de debajo de la cabecera.
-- Muestra las 5 primeras (fecha, concepto y `Amount`) y marca los errores con su mensaje.
+- Muestra las 5 primeras (fecha, concepto y `Amount`) y marca los errores con su mensaje y el número de fila de la tabla en bruto.
 
 #### «Continuar»
 - Deshabilitado mientras falten los obligatorios o si **todas** las filas de la vista previa dan error.
@@ -109,7 +109,7 @@ Importar extractos de **cualquier banco** que exporte CSV o `.xlsx`:
 - **Uso**: `last_used_at` se actualiza **solo** en el `commit` (SPEC-0011). Renombrar no lo cambia.
 
 ### 4. Gestión de plantillas (en Importar, sección «Plantillas de otros bancos»)
-- **Lista**: nombre y fecha del último uso («Sin usar» si es NULL).
+- **Lista**: nombre y fecha del último uso.
 - **Acciones**: **«Renombrar»** y **«Eliminar»** (borrado lógico, con confirmación). Eliminar no afecta a lo importado.
 - **Métodos nuevos de la API del worker** (repositorios en `src/db/repo/templates.ts`):
   - `templates.list()` → `{ id, name, format, settings, lastUsedAt, createdAt }[]`, solo las vivas;

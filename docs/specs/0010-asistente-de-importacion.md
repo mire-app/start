@@ -50,7 +50,7 @@ El historial y «Deshacer» van en SPEC-0019; el mapeo de columnas para otros ba
 - Los pasos 2 y 3 tienen **«Atrás»**, que conserva lo elegido. Volver al paso 1 descarta el fichero.
 - **Estado**: vive en un almacén en memoria del módulo de importación (`src/features/import/session.ts`), fuera del componente. Guarda los bytes del fichero, el `ParsedFile`, el plan y lo elegido.
 - **Salir a medias** (pasos 1 con fichero leído, 2 y 3): `useBlocker` del router pregunta «¿Descartar la importación en curso?». Cubre los enlaces, el botón «atrás» del navegador y editar el *hash* a mano. Recargar o cerrar la pestaña usa el aviso estándar `beforeunload`.
-- **Bloqueo** (SPEC-0005): el asistente registra un `onBeforeLock` que vacía el almacén y deja la marca `discardedByLock`. No se había escrito nada. Al desbloquear, Importar muestra el aviso «La importación en curso se descartó al bloquearse Míre» y borra la marca.
+- **Bloqueo** (SPEC-0005): el asistente registra un `onBeforeLock` que vacía el almacén y deja la marca `discardedByLock`. No se había escrito nada. Al desbloquear, Importar vuelve al paso 1, muestra el aviso «La importación en curso se descartó al bloquearse Míre» y borra la marca.
 
 **Paso 1 · Fichero** (`import.read`):
 - **Si va bien**: el formato detectado («BBVA», «MyInvestor (movimientos)» o «MyInvestor (cartera)»), el número de filas o posiciones y el rango de fechas. Los **errores de fila** se listan como `fila <sheetRow>: <mensaje traducido>`; esas filas no se importan.
@@ -155,7 +155,7 @@ El historial y «Deshacer» van en SPEC-0019; el mapeo de columnas para otros ba
    - `myinvestor-extracto.pdf` crea 4 cuentas en «Cartera MyInvestor», el resultado dice «Importadas 4 valoraciones» y el grupo vale `5.930,31 €` en Inicio;
    - `myinvestor-extracto-v2.pdf` con «Reemplazar» en LU0000000001 lo deja en `5.980,19 €`.
    - Cubre SPEC-0001 CA-05 (cartera).
-5. **CA-05** · PDF sin fecha: con `myinvestor-extracto-sin-fecha.pdf`, el paso 2 exige la fecha; una fecha futura deja «Continuar» deshabilitado; con `24/10/2026` se importa, y el grupo vale `5.930,31 €`.
+5. **CA-05** · PDF sin fecha (con el reloj fijado por `page.clock` en `2026-10-24T12:00` hora local): con `myinvestor-extracto-sin-fecha.pdf`, el paso 2 exige la fecha; una fecha futura deja «Continuar» deshabilitado; con `24/10/2026` se importa, y el grupo vale `5.930,31 €`.
 6. **CA-06** · Errores: `antiguo.xls`, `corrupto.xlsx`, `sin-posiciones.pdf`, `generico-latin1.csv` y un fichero de 11 MB generado en el test muestran sus mensajes.
 7. **CA-07** · Aportación externa:
    - en BBVA, con la fila 1 (+2.000,00 €) como aportación externa y el traspaso **sin** activar, tras importar Movimientos (SPEC-0015) muestra la marca en esa fila y el contador da ingresos `315,00 €` y gastos `976,56 €`;

@@ -31,7 +31,7 @@ Ver todas las importaciones hechas y **deshacer** cualquiera de ellas desde la a
 
 ### 2. Deshacer
 - **Botón «Deshacer»**: solo en las activas. Abre un diálogo con los efectos concretos del lote (`history.impact(batchId)`):
-  - «Se borrarán N movimientos y V valoraciones»;
+  - «Se borrarán N movimientos y V valoraciones» (se omite la parte que vale 0);
   - «T traspasos con otras importaciones se desvincularán»;
   - «Se restaurarán R valoraciones que esta importación reemplazó»;
   - «Las cuentas creadas, las plantillas y la asociación del fichero con sus cuentas se mantienen»;

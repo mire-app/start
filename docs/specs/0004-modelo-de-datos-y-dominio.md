@@ -87,6 +87,7 @@ Además de las columnas comunes:
 | `source_link` | `source, key, account_id` | `UNIQUE(source, key)` parcial, FK `account_id` |
 | `category` | `parent_id, system_key, name, icon, archived_at` (`icon` admite NULL; lo usa SPEC-0007) | FK `parent_id`; triggers `BEFORE INSERT/UPDATE` que lanzan `RAISE(ABORT,'category_depth')` si `parent_id` apunta a una categoría que ya tiene padre, **o** si se da padre a una categoría que ya tiene hijos vivos |
 | `category_map` | `source, source_category, category_id` | `UNIQUE(source, source_category)` parcial, FK |
+| `category_rule` | `pattern, pattern_norm, category_id` | `UNIQUE(pattern_norm)` parcial, FK `category_id`; la usa SPEC-0018 |
 | `movement` | `account_id, date, value_date, amount_cents, description, note, kind, category_id, transfer_group_id, import_batch_id, fingerprint, source_category` | `CHECK(amount_cents <> 0)`, `CHECK(kind IN ('regular','transfer','external'))`, `CHECK(kind <> 'external' OR amount_cents > 0)`, `CHECK((kind = 'transfer') = (transfer_group_id IS NOT NULL))`, FKs; índices `(account_id, date)` y `fingerprint` |
 | `valuation` | `account_id, date, value_cents, units, import_batch_id, deleted_by_batch_id` (FK a `import_batch`) | Trigger: la cuenta debe ser `investment` (`RAISE(ABORT,'valuation_account_type')`); `UNIQUE(account_id, date)` parcial |
 | `import_batch` | `source, file_name, file_sha256, row_count, imported_count, duplicate_count, reverted_at` | — |
@@ -155,7 +156,7 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
 ## Fuera de alcance
 - Importadores, lotes, *commit* y *revert* de importación: SPEC-0011. PDF: SPEC-0012.
 - Pantallas de cuentas, movimientos e importación: SPEC-0006 y SPEC-0010.
-- Contenido inicial y edición de categorías y de `category_map`: SPEC-0007.
+- Contenido inicial y edición de categorías y de `category_map`: SPEC-0007. Reglas (`category_rule`): SPEC-0018.
 - Registro de operaciones y sincronización: SPEC-0008. Cifrado: SPEC-0005.
 - Trasladar la prueba de almacenamiento y `db-version` a Ajustes › Diagnóstico: SPEC-0016.
 

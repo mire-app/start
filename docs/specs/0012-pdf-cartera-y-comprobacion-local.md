@@ -111,7 +111,7 @@ Variantes:
 - `sin-posiciones.pdf`: solo las páginas 1, 2 y 5.
 
 ### 4. Comprobación local (`tools/import-check.ts`, `pnpm import:check <fichero> [--plantilla <fichero.json>]`)
-- `--plantilla` recibe un JSON con la forma de `import_template.settings` (SPEC-0011), para validar ficheros de bancos sin formato predefinido.
+- `--plantilla` recibe un JSON con la forma de `import_template.settings` (SPEC-0011), para validar ficheros de bancos sin formato predefinido. La herramienta lo pasa a `read` como `{ id: 'import-check', name: 'import-check', settings }`.
 - Ejecuta `read` (SPEC-0011 y esta spec) en Node, contra una base vacía en memoria, sobre el fichero indicado. **No escribe en ninguna base persistente.**
 - **Código de salida**: `0` si `read` termina, aunque haya errores de fila; `2` si hay un error de fichero (`xls_not_supported`, `unreadable_file`, `unknown_format`, `pdf_layout_unknown`, `template_mismatch` o `template_invalid`), que se imprime como código.
 - Los errores de fila se imprimen con `sheetRow` (SPEC-0011).
