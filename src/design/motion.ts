@@ -24,7 +24,12 @@ export function navigate(direction: Direction, update: () => void): void {
   }
   const root = document.documentElement;
   const className = `vt-${direction}`;
+  root.classList.remove('vt-forward', 'vt-back');
   root.classList.add(className);
   const transition = document.startViewTransition(() => flushSync(update));
-  void transition.finished.finally(() => root.classList.remove(className));
+  transition.finished
+    .catch(() => {
+      // The update failed or the transition was skipped: the screen state is what it is.
+    })
+    .finally(() => root.classList.remove(className));
 }

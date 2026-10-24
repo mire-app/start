@@ -17,7 +17,7 @@ export function TopBar({ title, actions }: TopBarProps) {
     <header className="sticky top-0 z-30 bg-top text-on-top [view-transition-name:topbar]">
       <div className="mx-auto flex h-16 max-w-3xl items-center gap-5 px-5">
         <img src={logo} alt="Míre" width={68} height={24} className="h-6 w-auto shrink-0" />
-        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-lg leading-tight font-semibold">{title}</h1>
         {actions && <div className="-mr-2 flex shrink-0 items-center gap-1">{actions}</div>}
       </div>
     </header>

@@ -6,7 +6,7 @@ import { Select } from './ui/select';
 
 function Field({ label, id, children }: { label: string; id: string; children: ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-2">
       <label htmlFor={id} className="text-sm font-medium text-muted">
         {label}
       </label>

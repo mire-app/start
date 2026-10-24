@@ -64,7 +64,7 @@ function ToastCard({ toast, onClose }: { toast: ToastItem; onClose: () => void }
       }}
     >
       <motion.li
-        className="flex items-start gap-3 rounded-card border border-line bg-surface p-3 text-text shadow-overlay"
+        className="flex items-start gap-3 rounded-card border border-line bg-surface p-3 text-text"
         {...overlayMotion}
       >
         <Icon

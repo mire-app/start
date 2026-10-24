@@ -1,10 +1,13 @@
 import type { ComponentProps } from 'react';
 import { cn } from './cn';
 
-/** Table that scrolls horizontally inside its own box, never the page (375 px). */
-export function Table({ className, ...props }: ComponentProps<'table'>) {
+/**
+ * Table that scrolls horizontally inside its own box, never the page (375 px). The box is a
+ * labelled region reachable with the keyboard, so it can be scrolled without a pointer.
+ */
+export function Table({ className, label, ...props }: ComponentProps<'table'> & { label: string }) {
   return (
-    <div className="w-full overflow-x-auto">
+    <div role="region" aria-label={label} tabIndex={0} className="w-full overflow-x-auto">
       <table className={cn('w-full border-collapse text-sm', className)} {...props} />
     </div>
   );
@@ -36,5 +39,5 @@ export function TableHead({ className, ...props }: ComponentProps<'th'>) {
 }
 
 export function TableCell({ className, ...props }: ComponentProps<'td'>) {
-  return <td className={cn('px-3 py-2.5 align-middle', className)} {...props} />;
+  return <td className={cn('px-3 py-3 align-middle', className)} {...props} />;
 }

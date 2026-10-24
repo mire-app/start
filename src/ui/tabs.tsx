@@ -17,7 +17,7 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsP
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'h-11 cursor-pointer rounded-[6px] px-3 text-sm font-medium text-muted transition-colors duration-(--motion-fast) disabled:cursor-not-allowed disabled:opacity-50 data-[state=active]:bg-surface data-[state=active]:text-text sm:h-9',
+        'h-11 cursor-pointer rounded-control px-3 text-sm font-medium text-muted transition-colors duration-(--motion-fast) disabled:cursor-not-allowed disabled:opacity-50 data-[state=active]:bg-surface data-[state=active]:text-text sm:h-9',
         className,
       )}
       {...props}

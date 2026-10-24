@@ -24,9 +24,11 @@ interface AmountProps {
  * balance `−` only when negative.
  */
 export function Amount({ value, kind, className }: AmountProps) {
+  // A balance that rounds to 0,00 € shows no sign.
+  const negative = value < 0 && Math.round(Math.abs(value) * 100) > 0;
   let sign = '';
   if (kind === 'income') sign = '+';
-  else if (kind === 'expense' || (kind === 'balance' && value < 0)) sign = MINUS;
+  else if (kind === 'expense' || (kind === 'balance' && negative)) sign = MINUS;
   return (
     <span data-kind={kind} className={cn('tabular-nums', KIND_CLASS[kind], className)}>
       {sign + formatEUR(Math.abs(value))}

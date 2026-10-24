@@ -204,7 +204,7 @@ function Colours() {
       <div className="flex items-center gap-2">
         <span
           aria-hidden="true"
-          className="size-6 shrink-0 rounded-[6px] border border-line"
+          className="size-6 shrink-0 rounded-control border border-line"
           style={{ backgroundColor: value }}
         />
         <span>
@@ -220,7 +220,7 @@ function Colours() {
   };
   return (
     <Section id="sg-colours" title={t('styleguide.colours.title')}>
-      <Table>
+      <Table label={t('styleguide.colours.title')}>
         <TableCaption>{t('styleguide.colours.caption')}</TableCaption>
         <TableHeader>
           <TableRow>
@@ -391,19 +391,19 @@ function Components() {
 
       <Subsection title={t('styleguide.fields.title')}>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-col gap-2">
             <label htmlFor={inputId} className="text-sm font-medium text-muted">
               {t('styleguide.fields.concept')}
             </label>
             <Input id={inputId} placeholder={t('styleguide.fields.placeholder')} />
           </div>
-          <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-col gap-2">
             <label htmlFor={disabledInputId} className="text-sm font-medium text-muted">
               {t('styleguide.fields.disabled')}
             </label>
             <Input id={disabledInputId} disabled defaultValue={t('styleguide.fields.rent')} />
           </div>
-          <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-col gap-2">
             <label htmlFor={selectId} className="text-sm font-medium text-muted">
               {t('styleguide.fields.accountType')}
             </label>
@@ -500,7 +500,7 @@ function Components() {
           <Badge variant="gold">{t('styleguide.content.goal')}</Badge>
         </div>
         <Progress value={68} label={t('styleguide.content.goal')} />
-        <Table>
+        <Table label={t('styleguide.content.tableCaption')}>
           <TableCaption>{t('styleguide.content.tableCaption')}</TableCaption>
           <TableHeader>
             <TableRow>
