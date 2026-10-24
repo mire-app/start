@@ -27,7 +27,7 @@ Esta spec **no produce código**: define el alcance TO-BE. Su implementación se
 
 Cambios documentales que acompañan a esta spec:
 - Nuevo `ADR-0001` (`status: proposed`).
-- `docs/project-context.md`: el backlog pasa a decir «SPEC-0002 — … (with ADR-0002)» y se añaden las specs de funcionalidad SPEC-0006 a SPEC-0009.
+- `docs/project-context.md`: se añade en «Current state» la línea «Storage (ADR-0001, proposed)…»; el backlog pasa a decir «SPEC-0002 — … (with ADR-0002)» y se añaden las specs de funcionalidad SPEC-0006 a SPEC-0009.
 
 ### Usuarios y uso
 - **Un único usuario** en el MVP: el propietario. Sin registro público ni invitaciones.
@@ -41,10 +41,10 @@ Cambios documentales que acompañan a esta spec:
 ### Funciones del MVP (fase 1)
 1. **Cuentas**: alta, edición y archivado de cuentas de tipo **corriente, ahorro, efectivo e inversión**, con saldo inicial y fecha.
    - Corriente, ahorro y efectivo: saldo = saldo inicial + movimientos.
-   - Inversión: valor = última valoración registrada (función 6).
+   - Inversión: valor = última valoración registrada (función 6) + aportaciones − retiradas posteriores a esa valoración.
    - Una cuenta archivada se oculta de las listas, pero su histórico sigue contando en la evolución del patrimonio.
 2. **Movimientos**: alta, edición y borrado manual de ingresos y gastos (fecha, importe, concepto, cuenta, categoría, nota opcional).
-3. **Traspasos entre cuentas**: un traspaso enlaza la salida de una cuenta con la entrada en otra; **no cuenta como ingreso ni gasto**. Al importar, un movimiento se puede marcar como traspaso y emparejar con su contrapartida (si existe) para no duplicarlo.
+3. **Traspasos entre cuentas**: un traspaso enlaza la salida de una cuenta con la entrada en otra, de cualquier tipo; **no cuenta como ingreso ni gasto**. Un traspaso hacia o desde una cuenta de inversión es una aportación o retirada: suma o resta a su valor hasta la siguiente valoración, que lo ajusta a la realidad. Al importar, un movimiento se puede marcar como traspaso y emparejar con su contrapartida (si existe) para no duplicarlo.
 4. **Importación CSV/Excel**:
    - Formatos predefinidos para **BBVA** (movimientos → cuenta corriente/ahorro) y **MyInvestor** (movimientos de cuenta → cuenta corriente/ahorro; cartera → valoración de la cuenta de inversión).
    - Para otros bancos españoles: **mapeo de columnas** manual (fecha, concepto, importe…) que se puede guardar como plantilla reutilizable.
@@ -76,14 +76,15 @@ Cambios documentales que acompañan a esta spec:
 ### Trazabilidad (provisional; los números de SPEC-0006 en adelante pueden cambiar)
 | Spec | Ámbito | CA de esta spec |
 |---|---|---|
-| SPEC-0002 + ADR-0002 | Stack, alojamiento, i18n, `.arda/checks.sh` | CA-15, CA-17 (base), CA-18 |
+| SPEC-0002 + ADR-0002 | Stack, alojamiento, i18n, librería de sincronización y cifrado, `.arda/checks.sh` | CA-15, CA-17 |
 | SPEC-0003 | Sistema de diseño | CA-16 |
 | SPEC-0004 | Modelo de datos e importación | CA-04, CA-05, CA-06, CA-07 |
 | SPEC-0005 | RGPD y seguridad (clave, token, repositorio de datos) | CA-12, CA-14 |
 | SPEC-0006 | Cuentas, movimientos, traspasos e inversiones | CA-01, CA-02, CA-03 |
 | SPEC-0007 | Categorías y reglas | CA-08 |
-| SPEC-0008 | Sincronización local-first | CA-11, CA-13 |
+| SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
+| SPEC-0002 … SPEC-0009 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance
 - Conexión bancaria de cualquier tipo (PSD2, agregadores). **Descartado del producto.**
@@ -96,9 +97,9 @@ Cambios documentales que acompañan a esta spec:
 
 ## Criterios de aceptación
 Criterios del MVP. CA-01 a CA-18 se verifican en la spec responsable (tabla «Trazabilidad»); CA-19 lo valida el propietario.
-1. **CA-01** · Se pueden crear, editar y archivar cuentas de tipo corriente, ahorro, efectivo e inversión. En corriente, ahorro y efectivo, saldo = saldo inicial + movimientos; en inversión, valor = última valoración.
+1. **CA-01** · Se pueden crear, editar y archivar cuentas de tipo corriente, ahorro, efectivo e inversión. En corriente, ahorro y efectivo, saldo = saldo inicial + movimientos; en inversión, valor = última valoración + aportaciones − retiradas posteriores.
 2. **CA-02** · Se pueden crear, editar y borrar movimientos manuales con fecha, importe, concepto, cuenta y categoría.
-3. **CA-03** · Un traspaso entre dos cuentas mantiene el patrimonio total sin cambios y no aparece como ingreso ni gasto en el resumen mensual.
+3. **CA-03** · Un traspaso entre dos cuentas de cualquier tipo (incluida una de inversión) mantiene el patrimonio total sin cambios y no se registra como ingreso ni gasto.
 4. **CA-04** · Un extracto sintético con el formato de BBVA se importa sin mapeo manual y sus movimientos aparecen en la cuenta elegida.
 5. **CA-05** · Un extracto sintético de movimientos de MyInvestor se importa en una cuenta corriente/ahorro, y uno de su cartera actualiza la valoración de la cuenta de inversión.
 6. **CA-06** · Un CSV de un banco sin formato predefinido se importa mediante mapeo de columnas, y el mapeo se puede guardar y reutilizar.
@@ -118,7 +119,7 @@ Criterios del MVP. CA-01 a CA-18 se verifican en la spec responsable (tabla «Tr
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
-- **Sincronización multidispositivo**: fusionar cambios y resolver conflictos es la parte más compleja del MVP. Mitigación: diseñarla en SPEC-0002 (p. ej. registro de operaciones en lugar de copias completas).
+- **Sincronización multidispositivo**: fusionar cambios y resolver conflictos es la parte más compleja del MVP. Mitigación: la librería se elige en SPEC-0002 y el diseño de fusión y conflictos se hace en SPEC-0008 (p. ej. registro de operaciones en lugar de copias completas).
 - **Sincronización al cerrar**: en web, y sobre todo en móvil, el navegador no garantiza ejecutar código al cerrar. Mitigación: la garantía real es el intervalo de 5 min y el botón; cómo se verifica se concreta en SPEC-0008.
 - **Pérdida de la clave de cifrado**: los datos serían irrecuperables. Mitigación: copia de seguridad de la clave (SPEC-0005).
 - **Token de GitHub en el navegador**: si se filtra, da acceso al repositorio de datos (cifrados). Mitigación: permisos mínimos sobre un solo repositorio (SPEC-0005).
@@ -131,7 +132,7 @@ Criterios del MVP. CA-01 a CA-18 se verifican en la spec responsable (tabla «Tr
 - **Alcance vs. plan Claude Pro**: siete funciones más la sincronización cifrada es mucho trabajo; por eso se trocea en las specs de la tabla «Trazabilidad».
 
 ### Preguntas abiertas (para specs posteriores)
-- Estrategia de conflictos (último cambio gana o preguntar) y autenticación con GitHub desde web y móvil: SPEC-0002 / SPEC-0008.
+- Autenticación con GitHub desde web y móvil: SPEC-0002. Estrategia de conflictos (último cambio gana o preguntar): SPEC-0008.
 - Alojamiento gratuito de la web: SPEC-0002.
 - Contenido de la lista inicial de categorías: SPEC-0007.
 - Custodia y rotación de la clave, borrado por destrucción de la clave (*crypto-shredding*), nombre del repositorio de datos y alcance del RGPD: SPEC-0005.

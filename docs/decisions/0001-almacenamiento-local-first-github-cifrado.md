@@ -21,7 +21,7 @@ NÖM guarda datos financieros personales (SPEC-0001). Requisitos del propietario
 3. **Cifrado en el dispositivo** antes de subir: en GitHub no hay datos financieros en claro (ni en el contenido ni en nombres de fichero ni en mensajes de commit). Quedan visibles solo los metadatos inevitables (tamaño, fechas y frecuencia de commits).
 4. Las credenciales e integraciones de GitHub que usa Claude Code no tienen permisos sobre el repositorio de datos.
 5. **Sincronización** cada 5 minutos si hay cambios pendientes, bajo demanda y al ocultar o cerrar la app en la medida en que el navegador lo permita; los cambios de varios dispositivos se fusionan.
-6. El **cómo** (base de datos local, formato de sincronización, resolución de conflictos, librería de cifrado, autenticación con GitHub) se decide en SPEC-0002; la custodia de claves y del token, en SPEC-0005.
+6. El **cómo** se decide después: base de datos local, librería de sincronización y cifrado, alojamiento y autenticación con GitHub en SPEC-0002; diseño de fusión y conflictos en SPEC-0008; custodia de claves y del token en SPEC-0005.
 
 ## Alternativas consideradas
 | Alternativa | Por qué no |
