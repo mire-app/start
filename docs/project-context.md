@@ -23,6 +23,7 @@
 - Stack (ADR-0002): TypeScript + React + Vite, SQLite WASM (`opfs-sahpool`), PWA on GitHub Pages, Node 22, pnpm.
 - No `.arda/checks.sh` yet: SPEC-0002 creates it.
 - Owner's decision: **refine all specs of the backlog before implementing any**.
+- Working branch: `arda/claude`. Data repo (planned): private `mire-datos` in the owner's personal GitHub account; local DB not encrypted at rest (accepted risk, ADR-0005).
 
 ## Backlog (in order)
 1. SPEC-0001 — Product vision and MVP (TO-BE).
@@ -31,9 +32,10 @@
 4. SPEC-0004 — Data model, DB API and domain (balances, net worth). No UI.
 5. SPEC-0011 — Import engines xlsx/CSV (BBVA, MyInvestor movements, generic), with ADR-0004. No UI.
 6. SPEC-0012 — MyInvestor portfolio PDF reader and local `import:check`.
-7. SPEC-0005 — GDPR and security baseline.
-8. SPEC-0006 — Accounts, transactions, transfers and investments.
-9. SPEC-0007 — Categories and rules.
-10. SPEC-0008 — Local-first encrypted sync.
-11. SPEC-0009 — Dashboard.
-12. SPEC-0010 — Import wizard (UI for SPEC-0004 engines).
+7. SPEC-0005 — Security: encryption, keys, unlock (master password, recovery code, 4-digit PIN), token, CSP (with ADR-0005).
+8. SPEC-0013 — Privacy: export, erase, privacy notice, zero telemetry.
+9. SPEC-0006 — Accounts, transactions, transfers and investments.
+10. SPEC-0007 — Categories and rules.
+11. SPEC-0008 — Local-first encrypted sync.
+12. SPEC-0009 — Dashboard.
+13. SPEC-0010 — Import wizard (UI for SPEC-0004 engines).
