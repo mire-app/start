@@ -4,7 +4,7 @@ title: Movimientos: lista, filtros, detalle, edición y traspasos
 status: draft          # draft → approved (solo una persona) → implemented
 summary: Lista global de movimientos con filtros (cuenta, mes, tipo, categoría, texto), detalle con edición avisada de datos importados, borrado, vincular y desvincular traspasos y marcar aportación externa
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0006, SPEC-0011]
+refs: [SPEC-0001, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0006, SPEC-0011, SPEC-0016, ADR-0002]
 ---
 
 # SPEC-0015 · Movimientos: lista, filtros, detalle, edición y traspasos
@@ -25,13 +25,15 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
   - vincular traspasos desde el detalle;
   - interruptor de aportación externa.
 - `SPEC-0004`: repositorios (`updateMovement`, `deleteMovement`, `linkTransfer`, `unlinkTransfer` y `setKind`).
-- `SPEC-0006`: rutas `#/movimientos`, navegación, transiciones, datos de ejemplo y enlace «Ver todos» desde la cuenta. **Se implementa antes.**
+- `SPEC-0016` y `SPEC-0006`: router, regla de transiciones, datos de ejemplo, navegación, el marcador de `#/movimientos` (que esta spec sustituye) y el enlace «Ver todos». **Se implementan antes.**
+- `SPEC-0005`: `SecurityGate` conserva la ruta al desbloquear (SPEC-0016).
 - `SPEC-0003`: `Amount`, componentes, tokens y axe. `SPEC-0011`: margen de ±3 días para sugerir traspasos.
 - Categorías: hasta SPEC-0007 la lista de categorías puede estar vacía. El filtro y el campo de categoría funcionan con las que existan.
 
 ## Cambio (delta)
 ### 1. Lista (`#/movimientos`)
-- **Orden y agrupación**: todos los movimientos vivos, por fecha descendente y, en la misma fecha, por orden de creación descendente. Se agrupan por día, con cabecera `dd/mm/aaaa`.
+- **Ruta**: esta spec sustituye el marcador de `#/movimientos` y añade `#/movimientos/:id` (sección 2, nivel 2).
+- **Orden y agrupación**: todos los movimientos vivos, ordenados con `ORDER BY date DESC, created_at DESC, id DESC` (estable para paginar). Se agrupan por día, con cabecera `dd/mm/aaaa`.
 - **Cada fila**:
   - concepto, cuenta y categoría (si la tiene);
   - `Amount` según el tipo: ingreso, gasto, traspaso (`transfer`, en `muted`) o aportación externa (`income`, con la marca «Aportación externa»);
@@ -44,7 +46,7 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
   |---|---|
   | Cuenta | todas o una |
   | Mes | `AAAA-MM`, todos por defecto |
-  | Tipo | ingreso, gasto, traspaso, aportación externa |
+  | Tipo | ingreso (`kind='regular'` e importe > 0), gasto (`regular` e importe < 0), traspaso (`transfer`), aportación externa (`external`) |
   | Categoría | todas, sin categoría, o una |
   | Texto | busca en el concepto y la nota, sin distinguir mayúsculas ni tildes (`normalizeText`) |
 
@@ -59,12 +61,14 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
   - fecha y fecha valor;
   - importe, cuenta, concepto, nota y categoría;
   - tipo;
-  - origen: «Importado el dd/mm/aaaa (formato)», con el lote y su `source`;
+  - origen: «Importado el dd/mm/aaaa (formato)», con el lote y su `source`. Etiquetas de formato: `bbva_report` «BBVA», `myinvestor_movements` «MyInvestor (movimientos)», `myinvestor_pdf` «MyInvestor (cartera)», `generic_csv` «CSV», `generic_xlsx` «Excel» y `demo` «Datos de ejemplo»;
   - categoría del banco (`source_category`), si existe;
   - si es un traspaso: la **contrapartida**, con enlace.
 - **Editar** (`Dialog`):
   - **campos libres**: concepto, nota y categoría;
-  - **campos del banco**: importe, fecha y cuenta. Se editan tras el aviso «Este dato viene del extracto. Si lo cambias, no coincidirá con tu banco y podría no detectarse como duplicado al reimportar».
+  - **campos del banco**: importe, fecha y cuenta. El aviso aparece **la primera vez que se modifica uno de ellos** en el diálogo: «Este dato viene del extracto. Si lo cambias, ya no coincidirá con tu banco».
+  - **Huella**: `fingerprint` **nunca cambia al editar**, sea cual sea el campo. Así, al reimportar el mismo extracto, la fila original se sigue detectando como duplicada y no se duplica.
+  - Cambiar a negativo el importe de una **aportación externa** da `external_requires_positive`, con el mensaje «Quita antes la marca de aportación externa».
     - Si el movimiento es un traspaso, cambiar el importe o la cuenta lo **desvincula** antes, con un aviso.
     - El importe no puede ser 0.
 - **Aportación externa**: interruptor visible solo en movimientos de **entrada** que no son traspaso. Llama a `setKind('external' | 'regular')`.
@@ -75,7 +79,7 @@ Ver y corregir **todos los movimientos importados** en un solo sitio:
 - **Borrar**: confirmación «¿Borrar este movimiento?»; borrado lógico. Si es un traspaso, se desvincula primero y la contrapartida queda `regular`. Después vuelve a la lista con la transición `back`.
 
 ### 3. Repositorios nuevos (SPEC-0004, en `src/db/repo/`)
-- `listMovements(db, { accountId?, month?, kinds?, categoryId? | 'none', q?, limit, offset })` → `{ rows, total, incomeCents, expenseCents }`.
+- `listMovements(db, { accountId?, month?, types?: ('income'|'expense'|'transfer'|'external')[], categoryId? | 'none', q?, limit, offset })` → `{ rows, total, incomeCents, expenseCents }`, con la traducción de tipos de la tabla de filtros.
 - `getMovement(db, id)`, con su lote y su contrapartida.
 - `transferCandidates(db, movementId)`.
 - `updateMovement`, que ahora desvincula al cambiar importe o cuenta de un traspaso.
@@ -102,7 +106,9 @@ Los e2e parten de la seguridad configurada y de los datos de ejemplo de SPEC-000
 3. **CA-03** · Editar:
    - cambiar la nota de «GASOLINERA EJEMPLO» se guarda sin aviso;
    - cambiar su importe a −60,00 € muestra el aviso y, al aceptar, el saldo de «Cuenta Ejemplo» en Inicio pasa a `2.140,00 €`;
-   - un importe 0 no se permite.
+   - un importe 0 no se permite;
+   - (Vitest) tras editar importe, fecha, concepto y cuenta, `fingerprint` es idéntico, y reimportar con SPEC-0011 el fichero de origen marca esa fila como duplicada;
+   - (Vitest) cambiar a negativo el importe de un movimiento `external` da `external_requires_positive`.
    - Cubre SPEC-0001 CA-02.
 4. **CA-04** · Traspasos:
    - en «TRASPASO A AHORRO», «Desvincular traspaso» deja ambos lados `regular`; ahora cuentan como gasto e ingreso en el contador;
@@ -129,7 +135,8 @@ Los e2e parten de la seguridad configurada y de los datos de ejemplo de SPEC-000
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
-- **Editar datos del banco** rompe la detección de duplicados al reimportar. Está avisado en la interfaz, y deshacer el lote (SPEC-0011) sigue siendo la vía limpia.
+- **Editar datos del banco** no rompe la detección de duplicados, porque la huella no cambia, pero el movimiento deja de coincidir con el banco (avisado).
+- **Borrar y reimportar**: un movimiento borrado vuelve a importarse si se reimporta su extracto, porque su huella ya no está viva. Es coherente («lo borré, el banco lo tiene») y queda anotado.
 - **Rendimiento del filtro de texto** (`normalizeText` en SQL): se usa una columna normalizada calculada en JS al insertar y al editar, si las pruebas muestran lentitud con miles de filas.
 
 ### Preguntas abiertas

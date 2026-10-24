@@ -52,7 +52,7 @@ Las librerías se cargan bajo demanda (ADR-0004). Todo se ejecuta **dentro del w
    - filas normalizadas `{ row, sourceKey, date, valueDate?, amountCents, description, note?, sourceCategory?, balanceCents? }`;
    - errores por fila `{ row, code }`;
    - las filas se devuelven **en el orden del fichero**; el orden cronológico y el aviso `balance_chain_mismatch` los calcula `resolve`;
-   - **`accounts`**: una entrada por `sourceKey` distinta, `{ sourceKey, linkedAccountId?, proposal: { name, type, institution } }`. Se calcula consultando `source_link` en la base del worker. Si hay enlace, el asistente asigna por defecto la cuenta enlazada; si no, propone `proposal`.
+   - **`accounts`**: una entrada por `sourceKey` distinta, `{ sourceKey, linkedAccountId?, proposal: { name, type, institution } }`. Se calcula consultando los `source_link` **vivos** cuya cuenta también esté viva; los enlaces a cuentas borradas se ignoran. Si hay enlace, el asistente asigna por defecto la cuenta enlazada; si no, propone `proposal`.
 2. **`resolve(parsed, assignments)`** produce el **`ImportPlan`**. `assignments` dice, para cada `sourceKey`, `{ accountId }` o `{ create: { name, type, institution } }`.
 3. **`commit(plan, decisions)`** guarda el lote.
 4. **`revert(batchId)`** lo deshace.
@@ -233,7 +233,7 @@ Todos son tests de Vitest en Node con SQLite en memoria (SPEC-0004) y los ficher
    - ningún campo del plan contiene `TITULAR EJEMPLO` ni `ES00`.
 3. **CA-03** · Cuentas:
    - el primer `read` de `bbva-informe.xlsx` devuelve en `accounts` dos entradas sin `linkedAccountId`, con propuestas «Diario» y «Ahorro» (`checking`, `BBVA`);
-   - con `assignments` `{ create }` para ambas, el `commit` crea las dos cuentas y sus dos `source_link`;
+   - con `assignments` `{ create }` para ambas, el `commit` crea las dos cuentas, con `created_by_batch_id` igual al lote, y sus dos `source_link`;
    - un segundo `read` devuelve en `accounts` el `linkedAccountId` de cada una.
 4. **CA-04** · Duplicados:
    - la primera importación de `bbva-informe.xlsx` incluye las filas 5 y 6 (dos cafés);

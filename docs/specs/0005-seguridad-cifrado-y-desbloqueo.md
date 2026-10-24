@@ -85,7 +85,7 @@ Recuperación, ajustes de seguridad, CSP y guía del repositorio de datos: **SPE
 - **`SecurityGate`** envuelve `index.html`:
   - sin anillo → configuración;
   - con anillo y bloqueada → PIN, o contraseña si el resultado es `pin_disabled` o `master_expired`;
-  - desbloqueada → la app.
+  - desbloqueada → la app, **en la ruta que había en el *hash*** (no se pierde al bloquear ni al recargar).
   - `estilo.html` y `privacidad.html` no pasan por la puerta.
 - **Configuración**, 4 pasos con indicador de progreso. El anillo y el PIN **se guardan de forma atómica solo al terminar el paso 4**; si se cierra antes, no queda nada guardado y se empieza de cero.
   1. Bienvenida, con enlace al aviso de privacidad (SPEC-0013) → botón **«Empezar» / «Get started»**.

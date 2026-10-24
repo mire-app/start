@@ -101,7 +101,7 @@ Además de las columnas comunes:
 - **`valuation.deleted_by_batch_id`**: cuando una importación reemplaza una valoración (SPEC-0012), se guarda qué lote la borró, para que deshacer ese lote pueda restaurarla.
 
 ### 5. Repositorios mínimos de esta spec
-- **Cuentas y grupos**: `createAccount`, `updateAccount`, `archiveAccount`, `createGroup` y `setAccountGroup`.
+- **Cuentas y grupos**: `createAccount` y `createGroup` (ambas con `createdByBatchId?` opcional), `updateAccount`, `archiveAccount`, `unarchiveAccount` y `setAccountGroup`.
 - **Movimientos**: `createMovement`, `updateMovement` y `deleteMovement` (lógico); `linkTransfer` y `unlinkTransfer`; `setKind` (`regular` | `external`).
 - **Valoraciones**: `createValuation` y `deleteValuation` (lógico).
 - **Enlaces y equivalencias**: `upsertSourceLink` y `upsertCategoryMap`.
@@ -180,6 +180,9 @@ Las usarán SPEC-0011 y SPEC-0012; se definen y prueban aquí.
    | Clave ajena inexistente | `FOREIGN KEY` |
    | Dos `source_link` vivos con la misma `(source, key)` | `UNIQUE` |
    | Dos valoraciones vivas con la misma `(account_id, date)` | `UNIQUE` |
+   | `account.created_by_batch_id` con un lote inexistente | `FOREIGN KEY` |
+
+   Además, `created_by_batch_id` NULL **sí** se admite en `account` y en `account_group`.
 
    Además, tras el borrado lógico de una de ellas, insertar otra igual **sí** funciona.
 3. **CA-03** · `parseAmount` devuelve exactamente:

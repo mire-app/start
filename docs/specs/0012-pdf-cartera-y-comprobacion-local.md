@@ -69,7 +69,7 @@ refs: [SPEC-0001, SPEC-0004, SPEC-0011, ADR-0004]
 - **`commit`**, en una transacción:
   - si todas las posiciones son `skip` y no hay cuentas que crear, devuelve `nothing_to_import` **sin crear lote**;
   - si no:
-    1. crea el lote, las cuentas y el grupo propuestos (con `created_by_batch_id` igual al lote) y los `source_link`;
+    1. crea el lote, las cuentas y el grupo propuestos (con `created_by_batch_id` igual al lote; un grupo existente que se reutiliza conserva el suyo) y los `source_link`;
     2. inserta una `valuation` (`date`, `value_cents`, `units`, `import_batch_id`) por cada posición no omitida.
 - **`revert`**, en una transacción:
   1. marca `deleted_at` en las valoraciones del lote;
@@ -138,7 +138,7 @@ Tests de Vitest en Node, salvo CA-07.
 
    La posición de la página 4 se lee como continuación de la tabla.
 2. **CA-02** · `commit` sobre una base vacía:
-   - crea el grupo «Cartera MyInvestor», 4 cuentas `investment` con su `isin` y 4 valoraciones a `2026-10-24`;
+   - crea el grupo «Cartera MyInvestor» y 4 cuentas `investment` con su `isin`, todos con `created_by_batch_id` igual al lote, y 4 valoraciones a `2026-10-24`;
    - `groupValue` en esa fecha es **593031**.
 3. **CA-03** · Duplicados y deshacer:
    - reimportar el mismo PDF marca las 4 valoraciones `duplicate` con la acción `skip` y el aviso `same_file`, y el `commit` devuelve `nothing_to_import` sin crear lote;

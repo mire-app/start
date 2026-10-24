@@ -12,7 +12,7 @@ refs: [ADR-0001, ADR-0004]       # IDs de specs y ADR relacionados
 ## Intención
 Fijar **qué es Míre y qué hace su primera versión utilizable (MVP)**, para que las specs siguientes (stack, diseño, modelo de datos, seguridad y funcionalidades) partan de un alcance cerrado y acordado.
 
-**Visión.** Míre (en quenya, «joya» o «valor preciado»; identidad completa en SPEC-0003) es una aplicación de finanzas personales (y, más adelante, familiares) cuyo valor principal es la **vista global**: ver en un solo sitio todo el patrimonio y su evolución, a partir de datos introducidos a mano o importados de extractos, sin conexiones bancarias y con los datos bajo control exclusivo de su propietario.
+**Visión.** Míre (en quenya, «joya» o «valor preciado»; identidad completa en SPEC-0003) es una aplicación de finanzas personales (y, más adelante, familiares) cuyo valor principal es la **vista global**: ver en un solo sitio todo el patrimonio y su evolución, a partir de **extractos importados** (sin alta manual), sin conexiones bancarias y con los datos bajo control exclusivo de su propietario.
 
 **Problema que resuelve el MVP.** Hoy el propietario no tiene una visión consolidada de su patrimonio (cuentas en distintas entidades, efectivo e inversiones). El MVP debe dársela sin depender de otra herramienta.
 
@@ -30,6 +30,7 @@ Fijar **qué es Míre y qué hace su primera versión utilizable (MVP)**, para q
   - reparto en SPEC-0004, SPEC-0011, SPEC-0012 y SPEC-0010.
 
   El propietario reabrió la spec para ello.
+- Solo importación (2026-10-24): los movimientos, las cuentas y las valoraciones solo entran importando; no hay alta manual (funciones 1, 2 y 6, CA-01 y CA-02).
 - Proyecto greenfield: no hay código ni specs previas. Stack sin decidir (lo decidirá SPEC-0002 con ADR-0002).
 - Requisitos recogidos con el propietario en la sesión de Analizar y Refinar del 2026-10-24.
 
@@ -101,13 +102,14 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0005 + ADR-0005 | Seguridad: cifrado, claves, desbloqueo, autobloqueo y token | CA-12 (primitivas de cifrado) |
 | SPEC-0014 | Seguridad: recuperación, ajustes, CSP y repositorio de datos | CA-14 |
 | SPEC-0013 | Privacidad: exportación, borrado y aviso | CA-22 |
-| SPEC-0006 | Navegación, Inicio, cuentas, grupos, inversiones y ajustes | CA-01, CA-09 (patrimonio y desglose), CA-16 |
+| SPEC-0016 | Rutas, Ajustes, Diagnóstico y datos de ejemplo | CA-15 (idioma en Ajustes), CA-16 |
+| SPEC-0006 | Navegación, Inicio, cuentas, grupos e inversiones | CA-01, CA-09 (patrimonio y desglose), CA-16 |
 | SPEC-0015 | Movimientos: lista, filtros, edición, traspasos y aportación externa | CA-02, CA-03, CA-20 (pantallas) |
 | SPEC-0007 | Categorías y reglas | CA-08 |
 | SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
 | SPEC-0010 | Asistente de importación (pantallas) | CA-04, CA-05, CA-06, CA-07, CA-20, CA-21 (de extremo a extremo) |
-| SPEC-0002 … SPEC-0015 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
+| SPEC-0002 … SPEC-0016 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance
 - Conexión bancaria de cualquier tipo (PSD2, agregadores). **Descartado del producto.**
@@ -131,14 +133,14 @@ Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec respons
 8. **CA-08** · Existe una lista predefinida de categorías de dos niveles, editable; una regla por texto del concepto categoriza automáticamente los movimientos importados que coinciden.
 9. **CA-09** · El panel muestra el patrimonio total como suma de saldos de cuentas, efectivo y valor de las cuentas de inversión según CA-01, con desglose por cuenta y tipo y evolución mensual.
 10. **CA-10** · El panel muestra el resumen mensual de ingresos y gastos por categoría, excluyendo traspasos y aportaciones externas.
-11. **CA-11** · La app funciona sin conexión: con la red cortada se pueden crear y editar datos, y se sincronizan al recuperarla.
+11. **CA-11** · La app funciona sin conexión: con la red cortada se pueden importar y editar datos, y se sincronizan al recuperarla.
 12. **CA-12** · En el repositorio de datos de GitHub no aparece en claro ningún importe, concepto, nombre de cuenta ni categoría, ni en el contenido ni en nombres de fichero ni en mensajes de commit. Los metadatos inevitables (tamaño, fechas y frecuencia de commits) quedan fuera de esta garantía.
 13. **CA-13** · Con cambios pendientes, la sincronización ocurre en ≤ 5 minutos y al pulsar «sincronizar ahora». Un cambio hecho en un dispositivo aparece en otro tras sincronizar ambos; los cambios concurrentes en dispositivos distintos no hacen perder datos sin aviso.
 14. **CA-14** · Las credenciales e integraciones de GitHub usadas por Claude Code no tienen permisos (ni de lectura ni de escritura) sobre el repositorio de datos.
 15. **CA-15** · La interfaz se puede cambiar entre español e inglés; importes y fechas se muestran en formato es-ES por defecto.
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
-18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0015 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
+18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0016 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
 19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa Míre durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
 20. **CA-20** · Un movimiento marcado como aportación externa suma al patrimonio y no aparece como ingreso.
 21. **CA-21** · Tras importar, si el fichero trae saldo (MyInvestor) o el usuario indica el saldo real (BBVA), Míre muestra la diferencia con el saldo calculado cuando no coinciden; una importación completa se puede deshacer.

@@ -12,7 +12,7 @@
 ## Constraints
 - Built with Claude Code on the web (cloud Linux sessions) under a **Claude Pro** plan: usage limits → focused sessions, a new session for each `/actuar`.
 - Models: Sonnet (main session, andreth) and Haiku (balan). Priority: balanced.
-- Data: personal and family financial data under **GDPR**. Data entry is manual plus CSV/Excel import. **No bank connections** (no PSD2).
+- Data: personal and family financial data under **GDPR**. Data entry is **import only** (CSV, .xlsx and MyInvestor PDF); no manual entry. **No bank connections** (no PSD2).
 - Cost of a production error: medium. One person (the owner) develops and decides.
 
 ## Current state
@@ -36,9 +36,10 @@
 7. SPEC-0005 — Security: encryption, keys, unlock (master password, recovery code, 4-digit PIN), auto-lock, encrypted token (with ADR-0005).
 8. SPEC-0014 — Security: recovery, security settings, CSP/anti-framing, data repo setup guide.
 9. SPEC-0013 — Privacy: export, erase, privacy notice, zero telemetry.
-10. SPEC-0006 — Navigation, Home summary, accounts, groups, investments, Settings with Diagnostics and demo data.
-11. SPEC-0015 — Transactions: list, filters, detail, edit, transfers, external contribution.
-12. SPEC-0010 — Import wizard (UI for SPEC-0011/0012 engines).
-13. SPEC-0007 — Categories and rules.
-14. SPEC-0008 — Local-first encrypted sync.
-15. SPEC-0009 — Dashboard.
+10. SPEC-0016 — Router, Settings (moved controls), Diagnostics, demo data, test migration.
+11. SPEC-0006 — Navigation bars, Home summary, accounts, groups, investments.
+12. SPEC-0015 — Transactions: list, filters, detail, edit, transfers, external contribution.
+13. SPEC-0010 — Import wizard (UI for SPEC-0011/0012 engines).
+14. SPEC-0007 — Categories and rules.
+15. SPEC-0008 — Local-first encrypted sync.
+16. SPEC-0009 — Dashboard.
