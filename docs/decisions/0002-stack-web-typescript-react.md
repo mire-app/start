@@ -1,7 +1,7 @@
 ---
 id: ADR-0002
 title: Stack web TypeScript + React con SQLite WASM y PWA en GitHub Pages
-status: proposed       # proposed → accepted (solo una persona) → superseded
+status: accepted       # proposed → accepted (solo una persona) → superseded
 summary: SPA estática TypeScript/React/Vite como PWA en GitHub Pages; SQLite WASM (opfs-sahpool) en un worker; registro de operaciones cifrado con WebCrypto hacia GitHub mediante token de grano fino
 ---
 
