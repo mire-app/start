@@ -1,7 +1,7 @@
 ---
 id: SPEC-0003
 title: Identidad de marca y sistema de diseño
-status: draft          # draft → approved (solo una persona) → implemented
+status: approved          # draft → approved (solo una persona) → implemented
 summary: Renombrado a Míre, tokens de color (Noche y esmeralda, claro/oscuro, WCAG AA), Sora autoalojada, logotipo MĪRE, iconos, movimiento y guía de estilo verificable
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
 refs: [SPEC-0001, SPEC-0002, ADR-0002, ADR-0003]
