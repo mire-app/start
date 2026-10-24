@@ -97,14 +97,15 @@ Cambios documentales que acompañan a esta spec:
 | SPEC-0004 | Modelo de datos, base de datos y dominio (sin pantallas) | CA-01, CA-03, CA-20 (lógica de cálculo) |
 | SPEC-0011 + ADR-0004 | Motores de importación xlsx/CSV: BBVA, MyInvestor movimientos, genérico; duplicados, traspasos, saldo, deshacer (sin pantallas) | CA-04, CA-05 (movimientos), CA-06, CA-07, CA-21 (lógica) |
 | SPEC-0012 | Lector del PDF de cartera de MyInvestor y comprobación local de ficheros reales | CA-05 (cartera, lógica) |
-| SPEC-0005 + ADR-0005 | Seguridad: cifrado, claves, desbloqueo, token y repositorio de datos | CA-12 (primitivas de cifrado), CA-14 |
-| SPEC-0013 | Privacidad: exportación, borrado y aviso | Restricción RGPD del proyecto |
+| SPEC-0005 + ADR-0005 | Seguridad: cifrado, claves, desbloqueo, autobloqueo y token | CA-12 (primitivas de cifrado) |
+| SPEC-0014 | Seguridad: recuperación, ajustes, CSP y repositorio de datos | CA-14 |
+| SPEC-0013 | Privacidad: exportación, borrado y aviso | CA-22 |
 | SPEC-0006 | Cuentas, movimientos, traspasos e inversiones | CA-01, CA-02, CA-03 |
 | SPEC-0007 | Categorías y reglas | CA-08 |
 | SPEC-0008 | Sincronización local-first (diseño de fusión y conflictos) | CA-11, CA-13 |
 | SPEC-0009 | Panel | CA-09, CA-10 |
 | SPEC-0010 | Asistente de importación (pantallas) | CA-04, CA-05, CA-06, CA-07, CA-20, CA-21 (de extremo a extremo) |
-| SPEC-0002 … SPEC-0013 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
+| SPEC-0002 … SPEC-0014 | Cada spec, al refinarse | CA-18 (incremental; se cierra con la última) |
 
 ## Fuera de alcance
 - Conexión bancaria de cualquier tipo (PSD2, agregadores). **Descartado del producto.**
@@ -114,10 +115,10 @@ Cambios documentales que acompañan a esta spec:
 - Paleta, tipografía y componentes: SPEC-0003.
 - Esquema de datos: SPEC-0004. Detalle de formatos de importación: SPEC-0011 y SPEC-0012. Pantallas de importación: SPEC-0010.
 - Ficheros Excel antiguos (`.xls`): no se leen; se guardan antes como `.xlsx` (decisión del propietario, ADR-0004).
-- Custodia de claves, token de GitHub y repositorio de datos: SPEC-0005. Exportación, borrado y aviso de privacidad: SPEC-0013.
+- Custodia de claves y token de GitHub: SPEC-0005. Recuperación, CSP y repositorio de datos: SPEC-0014. Exportación, borrado y aviso de privacidad: SPEC-0013.
 
 ## Criterios de aceptación
-Criterios del MVP. CA-01 a CA-18, CA-20 y CA-21 se verifican en la spec responsable (tabla «Trazabilidad»); CA-19 lo valida el propietario.
+Criterios del MVP. CA-01 a CA-18 y CA-20 a CA-22 se verifican en la spec responsable (tabla «Trazabilidad»); CA-19 lo valida el propietario.
 1. **CA-01** · Se pueden crear, editar y archivar cuentas de tipo corriente, ahorro, efectivo e inversión. En corriente, ahorro y efectivo, saldo = saldo inicial + movimientos; en inversión, valor = última valoración + aportaciones − retiradas posteriores.
 2. **CA-02** · Se pueden crear, editar y borrar movimientos manuales con fecha, importe, concepto, cuenta y categoría.
 3. **CA-03** · Un traspaso entre dos cuentas de cualquier tipo (incluida una de inversión) mantiene el patrimonio total sin cambios y no se registra como ingreso ni gasto.
@@ -135,10 +136,11 @@ Criterios del MVP. CA-01 a CA-18, CA-20 y CA-21 se verifican en la spec responsa
 15. **CA-15** · La interfaz se puede cambiar entre español e inglés; importes y fechas se muestran en formato es-ES por defecto.
 16. **CA-16** · Las pantallas del MVP se pueden usar en un móvil (≈ 375 px de ancho) sin scroll horizontal.
 17. **CA-17** · Ningún servicio usado en el MVP, alojamiento de la web incluido, tiene coste.
-18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0013 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
+18. **CA-18** · Cada spec de SPEC-0002 a SPEC-0014 lista `SPEC-0001` en `refs`, y su sección «Fuera de alcance» no incluye nada que esta spec ponga dentro del MVP.
 19. **CA-19** · **Criterio de éxito** (lo valida el propietario): usa Míre durante un mes real, importa y categoriza todas sus cuentas y consulta su patrimonio sin necesitar otra herramienta.
 20. **CA-20** · Un movimiento marcado como aportación externa suma al patrimonio y no aparece como ingreso.
 21. **CA-21** · Tras importar, si el fichero trae saldo (MyInvestor) o el usuario indica el saldo real (BBVA), Míre muestra la diferencia con el saldo calculado cuando no coinciden; una importación completa se puede deshacer.
+22. **CA-22** · El propietario puede exportar todos sus datos en un formato legible y borrar todos los datos de un dispositivo; la guía explica cómo eliminar la copia remota.
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
@@ -159,4 +161,8 @@ Criterios del MVP. CA-01 a CA-18, CA-20 y CA-21 se verifican en la spec responsa
 - Alojamiento gratuito de la web: SPEC-0002.
 - ¿Se admiten ingresos o gastos directos en una cuenta de inversión, o solo traspasos y valoraciones?: SPEC-0006.
 - Contenido de la lista inicial de categorías: SPEC-0007.
-- Custodia y rotación de la clave, borrado por destrucción de la clave (*crypto-shredding*), nombre del repositorio de datos y alcance del RGPD: SPEC-0005.
+- Resuelto (2026-10-24):
+  - custodia de la clave y desbloqueo en SPEC-0005;
+  - recuperación, ajustes y repositorio `mire-datos` en SPEC-0014;
+  - exportación, borrado local y aviso de privacidad en SPEC-0013;
+  - borrado remoto efectivo: eliminar el repositorio `mire-datos` (guía en SPEC-0014), con aviso a otros dispositivos en SPEC-0008.

@@ -2,111 +2,134 @@
 id: SPEC-0013
 title: Privacidad: exportación, borrado y aviso
 status: draft          # draft → approved (solo una persona) → implemented
-summary: Exportación completa en .zip (JSON + CSV), borrado de todos los datos del dispositivo con destrucción de la clave local, aviso de privacidad es/en y telemetría cero verificada
+summary: Exportación completa en .zip (JSON + CSV seguros para Excel), borrado de todos los datos del dispositivo con destrucción de la clave local, aviso de privacidad es/en y telemetría cero verificada
 test_changes: none     # none | allowed (solo si hay que cambiar tests existentes; justificarlo)
-refs: [SPEC-0001, SPEC-0004, SPEC-0005, ADR-0005]
+refs: [SPEC-0001, SPEC-0002, SPEC-0003, SPEC-0004, SPEC-0005, SPEC-0014, ADR-0005]
 ---
 
 # SPEC-0013 · Privacidad: exportación, borrado y aviso
 
 ## Intención
-Dar al propietario control total sobre sus datos, como pide el RGPD:
-- **llevárselos** (exportación completa y legible);
-- **borrarlos** (supresión con destrucción de la clave);
-- **saber qué se hace con ellos** (aviso de privacidad);
-- con la garantía de que **ningún dato ni metadato** sale a terceros.
+Dar al propietario control sobre sus datos, como pide el RGPD:
+- **llevárselos**: exportación completa y legible;
+- **borrarlos** de este dispositivo, destruyendo aquí la clave;
+- **saber qué se hace con ellos**: aviso de privacidad;
+- con **ningún dato ni metadato** enviado a terceros.
 
 ## Contexto
-- `SPEC-0001`: restricción RGPD del proyecto (`docs/project-context.md`).
-- `SPEC-0004`: esquema y repositorios. Se implementa antes.
-- `SPEC-0005`: puerta de seguridad, contraseña maestra, menú de `TopBar`, CSP y almacén `mire-keys`. Se implementa antes.
-- `ADR-0005`: la base local no se cifra (riesgo aceptado).
+- `SPEC-0001` CA-22: exportar y borrar.
+- `SPEC-0004`: esquema y repositorios.
+- `SPEC-0005`: puerta de seguridad, contraseña maestra, menú de `TopBar` y `mire-keys`.
+- `SPEC-0014`: recuperación (`unlockWithRecoveryCode`), CSP aplicada a todas las páginas y guía de borrado remoto.
+- `SPEC-0002` y `SPEC-0003`: PWA, entradas de Vite, sistema de diseño, `checks.sh` y contrato de e2e.
+- **Orden de implementación**: SPEC-0004, SPEC-0005 y SPEC-0014 antes que esta.
 - **Decisiones del propietario** (2026-10-24):
   - «Borrar todos mis datos» = local + remoto + destruir la clave;
   - exportación en JSON + CSV;
   - ninguna telemetría;
   - aviso de privacidad breve.
-- **Reparto del borrado**: esta spec borra todo lo del **dispositivo**, incluida la clave. La parte **remota** (ficheros del repositorio de datos, anillo de claves subido y aviso al resto de dispositivos) la añade SPEC-0008, que reutiliza la misma acción.
+- **Alcance real del borrado**:
+  - esta spec borra **todo lo del dispositivo** y destruye **aquí** la clave;
+  - la copia remota no se vuelve ilegible con eso: el anillo subido sigue envuelto con la contraseña y el código, y borrar ficheros no borra el historial de git;
+  - el borrado remoto efectivo es **eliminar el repositorio `mire-datos`** (guía en SPEC-0014);
+  - SPEC-0008 añadirá avisar a los demás dispositivos.
 
 ## Cambio (delta)
-### 1. Exportación (`src/privacy/export.ts`, menú de `TopBar` → «Exportar mis datos…»)
-- Pide la **contraseña maestra** (SPEC-0005), aunque la app esté desbloqueada.
-- Genera `mire-export-AAAAMMDD.zip` con `fflate` (MIT) en el navegador y lo descarga.
+### 1. Exportación (`src/privacy/export.ts`, menú → **«Exportar mis datos…» / «Export my data…»**)
+- **Acceso**: pide la **contraseña maestra o el código de recuperación**, aunque la app esté desbloqueada.
+- **Fichero**: genera en el navegador, con `fflate` (MIT, versión exacta), `mire-export-AAAAMMDD.zip`, y lo descarga.
 - **`mire.json`**: `{ format: 'mire-export', version: 1, schemaVersion, exportedAt, tables: { <tabla>: [filas vivas] } }`.
-  - Incluye todas las tablas de usuario de SPEC-0004 (y las que añadan specs posteriores), sin filas borradas.
+  - Las tablas se **enumeran dinámicamente** desde `sqlite_master` (`type='table'`), excluyendo `schema_migrations` y las `sqlite_%`.
+  - Solo se incluyen filas con `deleted_at IS NULL`.
   - Importes en céntimos y fechas ISO.
-  - El formato es estable y versionado, pensado para un futuro «restaurar desde copia».
 - **CSV legibles en Excel**: `cuentas.csv`, `movimientos.csv`, `valoraciones.csv` y `categorias.csv`.
-  - UTF-8 con BOM, separador `;`, decimales con coma y fechas `dd/mm/aaaa`;
-  - cabeceras en el idioma de la interfaz;
-  - los movimientos llevan el nombre de la cuenta y de la categoría, no sus ids.
-- **No incluye** el anillo de claves, el token ni los secretos.
+  - UTF-8 con BOM y separador `;`.
+  - **Entrecomillado RFC 4180**: comillas dobles en los campos con `;`, `"`, CR o LF, y `"` duplicada.
+  - **Protección contra inyección de fórmulas**: toda celda de **texto** que empiece por `=`, `+`, `-`, `@`, tabulador o CR se prefija con `'`. Las celdas **numéricas** (importes con coma decimal, p. ej. `-51,56`) no se tocan.
+  - Fechas `dd/mm/aaaa` y cabeceras en el idioma de la interfaz.
+  - Los movimientos llevan el nombre de su cuenta y de su categoría.
+- **No incluye**: el anillo de claves, el token ni los secretos.
 
-### 2. Borrado de todos los datos del dispositivo (`src/privacy/erase.ts`, menú → «Borrar todos mis datos…»)
+### 2. Borrado del dispositivo (`src/privacy/erase.ts`, menú → **«Borrar todos mis datos…» / «Delete all my data…»**)
 - **Diálogo**:
   - explica qué se borra y que no se puede deshacer;
-  - recomienda exportar antes, con un botón;
-  - pide la **contraseña maestra** y escribir la palabra **`BORRAR`** (o **`DELETE`** en inglés).
-- **Acción**, en este orden:
-  1. cierra la base de datos en el worker;
-  2. borra los ficheros OPFS de `/mire.sqlite3` y `/mire-smoke.sqlite3`, incluido el pool de `opfs-sahpool`;
-  3. borra la base IndexedDB `mire-keys` completa. Es la **destrucción de la clave en este dispositivo**: la DEK deja de existir aquí;
-  4. borra las claves `mire.*` de `localStorage`;
-  5. borra las cachés del *service worker* que no sean la estructura de la app (la estructura no contiene datos).
-- **Resultado**: la app vuelve a la bienvenida de SPEC-0005.
-- **Gancho para SPEC-0008**: `eraseAll({ remote })` acepta `remote: true`, que en esta spec lanza `remote_not_available` sin borrar nada. SPEC-0008 lo implementará y la interfaz lo usará cuando haya sincronización.
+  - ofrece exportar antes;
+  - avisa de que **el token de GitHub sigue vigente** (hay que revocarlo en GitHub) y de que **la copia remota solo se elimina borrando el repositorio `mire-datos`**, con enlace a la guía de SPEC-0014;
+  - pide la **contraseña maestra o el código de recuperación** y escribir **`BORRAR`** (en inglés, **`DELETE`**).
+- **Comprobación previa**: si hay otra pestaña de Míre abierta, se detecta con un `BroadcastChannel('mire')` y un *ping* con un plazo de 500 ms. En ese caso se cancela con «Cierra las otras pestañas de Míre e inténtalo de nuevo», sin borrar nada.
+- **Acción, en orden**. Si cualquier paso falla, **se detiene** sin pasar a los siguientes, y la clave solo se destruye si todo lo anterior ha ido bien:
+  1. el worker de la base de datos llama a `wipeFiles()` del pool `opfs-sahpool` y a `removeVfs()`; después se termina el worker;
+  2. se borran las claves `mire.*` de `localStorage`;
+  3. se borran las cachés del *service worker* salvo la de la estructura de la app;
+  4. se cierran las conexiones a `mire-keys` y `indexedDB.deleteDatabase('mire-keys')`; un evento `blocked` cuenta como fallo. Es la **destrucción de la clave en este dispositivo**.
+- **Resultado**: la app recarga y muestra la bienvenida de SPEC-0005.
+- **Gancho para SPEC-0008**: `eraseAll({ remote })`; con `remote: true` devuelve `remote_not_available` sin borrar nada.
 
 ### 3. Aviso de privacidad (`privacidad.html`, tercera entrada de Vite)
-- **Acceso**: desde la bienvenida (SPEC-0005) y desde el menú de `TopBar`. Disponible **antes de configurar la seguridad** y sin conexión (*precache*).
-- **Contenido**, en es/en, con el tono de `docs/brand.md`, breve:
-  - qué datos guarda: cuentas, movimientos, valoraciones, categorías y ajustes;
+- **Configuración en la PWA**: se añade `/privacidad\.html$/` al `navigateFallbackDenylist`, y la página incluye el script de tema de SPEC-0003. Su CSP la pone el plugin de SPEC-0014.
+- **Acceso**: desde la bienvenida (sin configurar) y desde el menú (**«Privacidad» / «Privacy»**). Funciona sin conexión.
+- **Contenido** (es/en, tono de `docs/brand.md`, breve):
+  - qué datos se guardan: cuentas, movimientos, valoraciones, categorías y ajustes;
   - dónde:
-    - en tu dispositivo (almacenamiento del navegador, **sin cifrar en el dispositivo**, protegido por el cifrado del propio dispositivo);
-    - y, si activas la sincronización, **cifrados** en tu repositorio privado de GitHub;
-  - qué **no** hace: sin cookies, sin analíticas, sin terceros y sin conexiones bancarias;
-  - cómo exportar y borrar;
-  - qué pasa si pierdes la contraseña y el código de recuperación;
-  - fecha de la última actualización.
-- **Responsable**: «uso personal del propietario». No incluye datos de contacto personales, porque el repositorio es público.
-- Usa la CSP de SPEC-0005 y el sistema de diseño de SPEC-0003.
+    - en el navegador del dispositivo, **sin cifrar**: su protección **depende de que el dispositivo esté cifrado y bloqueado**, y el PIN de Míre solo bloquea la interfaz;
+    - si se activa la sincronización, **cifrados** en el repositorio privado de GitHub del usuario;
+  - lo que **no** hace: cookies, analíticas, terceros ni conexiones bancarias;
+  - cómo exportar y borrar, incluido que el borrado remoto exige eliminar `mire-datos`;
+  - qué pasa si se pierden la contraseña y el código;
+  - fecha de actualización;
+  - responsable: «uso personal del propietario», sin datos de contacto personales.
 
 ### 4. Telemetría cero
-- **Sin dependencias** de analíticas, métricas ni informes de errores. `checks.sh` falla si `package.json` incluye alguna de esta lista negra: `@sentry/*`, `posthog-*`, `mixpanel*`, `@vercel/analytics`, `react-ga*`, `@datadog/*`, `logrocket*`, `@amplitude/*`, `firebase`, `@google-analytics/*`.
-- **Sin peticiones de red** salvo al propio origen y, desde SPEC-0008, a `api.github.com`. La CSP de SPEC-0005 (`connect-src`) ya lo impone; aquí se verifica.
+- **`tools/check-deps.ts`**, ejecutado por `.arda/checks.sh`, falla si alguna **dependencia directa** (`dependencies` o `devDependencies`) está en esta lista negra:
+  `@sentry/*`, `posthog-*`, `mixpanel*`, `@vercel/analytics`, `react-ga*`, `@datadog/*`, `logrocket*`, `@amplitude/*`, `firebase`, `@google-analytics/*`.
+  - Su función `checkDeps(pkgJson)` recibe el objeto, lo que permite probarla.
+  - Las dependencias **transitivas no** se comprueban (limitación aceptada; la CSP y el CA-06 cubren el efecto).
+
+### 5. Ficheros que cambia
+- **Nuevos**: `src/privacy/*`, `privacidad.html`, `src/privacy/ui/*` y `tools/check-deps.ts`.
+- **Modificados**:
+  - `vite.config.ts`: entrada y *denylist*;
+  - `package.json`: `fflate`;
+  - `.arda/checks.sh`: `check-deps`;
+  - claves i18n en `es.json` y `en.json`;
+  - el menú de `TopBar`.
 
 ## Fuera de alcance
-- Borrado remoto y aviso al resto de dispositivos: SPEC-0008.
-- Restaurar desde la copia exportada: futuro.
-- Política de privacidad para terceros usuarios, que solo hará falta cuando el hogar sea multiusuario.
+- Borrado remoto y aviso a otros dispositivos: SPEC-0008. Guía para eliminar el repositorio: SPEC-0014.
+- Restaurar desde la copia exportada: futuro (el formato ya está versionado).
+- Política para terceros usuarios: cuando el hogar sea multiusuario.
 
 ## Criterios de aceptación
-1. **CA-01** · Exportación (Vitest, Node, SQLite en memoria con datos de SPEC-0004: 2 cuentas, 3 movimientos con un traspaso, 1 valoración y 1 categoría):
+1. **CA-01** · Exportación (Vitest, Node, SQLite en memoria). Datos de partida: 2 cuentas, 3 movimientos (uno con el concepto `=HYPERLINK("http://x";"y")`, otro con `Café; "bueno"` y otro de −51,56 € del 05/09/2026), 1 valoración, 1 categoría y 1 movimiento borrado. Resultado:
    - el `.zip` contiene `mire.json` y los 4 CSV;
-   - `mire.json` tiene `format`, `version: 1` y el `schemaVersion` actual, y **no** contiene filas borradas;
-   - `movimientos.csv` empieza por BOM, usa `;` y muestra `-51,56` y `05/09/2026` en la fila esperada;
-   - ningún fichero contiene el anillo de claves ni `github_pat_`.
+   - las claves de `tables` son exactamente las tablas de SPEC-0004 menos `schema_migrations`;
+   - el movimiento borrado no aparece;
+   - `movimientos.csv` empieza por BOM, la celda del concepto peligroso es `'=HYPERLINK(""http://x"";""y"")`, entrecomillada según RFC 4180, `Café; "bueno"` aparece como `"Café; ""bueno"""`, y el importe aparece como `-51,56` **sin** `'`, con la fecha `05/09/2026`;
+   - ningún fichero contiene `github_pat_` ni el anillo de claves.
 2. **CA-02** · e2e de exportación:
-   - el menú pide la contraseña maestra; con una errónea no exporta;
-   - con la correcta, se descarga `mire-export-AAAAMMDD.zip` (evento `download` de Playwright) con los 5 ficheros.
+   - con una contraseña errónea no hay descarga;
+   - con la correcta, o con el código de recuperación, se descarga `mire-export-AAAAMMDD.zip` con 5 ficheros.
 3. **CA-03** · e2e de borrado:
-   - tras configurar la seguridad y pulsar la prueba de almacenamiento, «Borrar todos mis datos» con la contraseña y `BORRAR` vuelve a la bienvenida;
-   - tras recargar sigue en la bienvenida, `indexedDB.databases()` no incluye `mire-keys` y no hay claves `mire.*` en `localStorage`;
-   - tras volver a configurar, la prueba de almacenamiento muestra **0** y `db-version` muestra 1 (base nueva);
-   - con la palabra mal escrita o la contraseña errónea, no se borra nada.
-4. **CA-04** · `eraseAll({ remote: true })` lanza `remote_not_available` y no borra nada (Vitest).
-5. **CA-05** · Aviso de privacidad (e2e):
-   - `privacidad.html` se abre desde la bienvenida sin configurar la seguridad, y también sin conexión tras la primera visita;
-   - tiene versión es y en, con los apartados del punto 3;
+   - tras configurar y pulsar la prueba de almacenamiento, el borrado con la contraseña y `BORRAR` lleva a la bienvenida;
+   - tras recargar sigue la bienvenida, `indexedDB.databases()` no incluye `mire-keys` y no hay claves `mire.*`;
+   - al configurar de nuevo, la prueba de almacenamiento muestra **0** y `db-version` muestra 1;
+   - con `BORRA` o con una contraseña errónea no se borra nada.
+4. **CA-04** · e2e con dos pestañas: con una segunda página abierta, el borrado se cancela con el aviso de otras pestañas y no borra nada.
+5. **CA-05** · `eraseAll({ remote: true })` devuelve `remote_not_available` y no borra nada (Vitest). Si se simula un fallo en el paso 1, `mire-keys` sigue existiendo.
+6. **CA-06** · Aviso de privacidad (e2e):
+   - se abre desde la bienvenida sin configurar, y también sin conexión tras la primera visita;
+   - tiene versión es y en con los apartados del punto 3;
+   - tiene la meta CSP de SPEC-0014 y no produce `securitypolicyviolation`;
    - axe no da infracciones en claro ni en oscuro, y no hay scroll horizontal a 375 px.
-6. **CA-06** · Telemetría cero (e2e): en un recorrido completo (bienvenida, configuración, inicio, exportación, aviso y guía de estilo), **todas** las peticiones (`page.on('request')`) van al propio origen.
-7. **CA-07** · `checks.sh` falla si se añade a `package.json` cualquier paquete de la lista negra del punto 4; un test lo comprueba con un `package.json` temporal.
-8. **CA-08** · Los e2e de SPEC-0002 a SPEC-0005 pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
+7. **CA-07** · Telemetría cero (e2e): en un recorrido completo (bienvenida, configuración, inicio, exportación, aviso y guía de estilo), **todas** las peticiones observadas con `context.on('request')` (página, workers y service worker) van al propio origen.
+8. **CA-08** · `checkDeps` (Vitest) da error con `{ dependencies: { '@sentry/browser': '1.0.0' } }` y no da error con el `package.json` real. `checks.sh` la ejecuta.
+9. **CA-09** · Los e2e de SPEC-0002 a SPEC-0005 y SPEC-0014 pasan sin modificarse, y `.arda/checks.sh` sigue por debajo de 5 minutos.
 
 ## Riesgos y preguntas abiertas
 ### Riesgos
-- **Borrado parcial** si el navegador falla a mitad: el orden del punto 2 deja la clave para el final de lo crítico, y una segunda ejecución completa lo que falte (es idempotente).
-- **Cachés de otros navegadores o dispositivos**: el borrado es por dispositivo. Los demás se borrarán mediante SPEC-0008.
-- **Exportación en claro**: el `.zip` contiene los datos sin cifrar; el diálogo lo advierte. Guardarlo es responsabilidad del propietario.
+- **Borrado parcial**: el orden y la parada ante fallos evitan destruir la clave con datos aún presentes, y repetir la acción completa lo que falte.
+- **Copia remota**: solo desaparece eliminando el repositorio (acción del propietario); el diálogo y el aviso lo dicen.
+- **Exportación en claro**: el `.zip` no va cifrado; el diálogo lo advierte.
 
 ### Preguntas abiertas
 - Ninguna para el propietario.
