@@ -17,4 +17,25 @@ export default tseslint.config(
     files: ['src/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended],
   },
+  {
+    // SPEC-0004 §1: writes go through the worker. Outside src/db/ only client.ts is used, plus
+    // the SqlDb type for code the worker runs (e.g. src/import/).
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/db/**'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '(^|/)db/(worker|sql)([.-][^/]*)?$',
+              allowTypeImports: true,
+              message:
+                'Use src/db/client.ts; only `import type` is allowed from the worker and sql.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
