@@ -69,7 +69,7 @@ const MOVEMENT_COLUMNS: Record<keyof UpdateMovementInput, string> = {
 export function updateMovement(db: SqlDb, id: string, patch: UpdateMovementInput): void {
   db.transaction(() => {
     const keys = (Object.keys(patch) as (keyof UpdateMovementInput)[]).filter(
-      (key) => key in MOVEMENT_COLUMNS && patch[key] !== undefined,
+      (key) => Object.hasOwn(MOVEMENT_COLUMNS, key) && patch[key] !== undefined,
     );
     setMovementColumns(
       db,

@@ -1,6 +1,7 @@
 import type { Database } from '@sqlite.org/sqlite-wasm';
+import type { SqlValue } from './protocol';
 
-export type SqlValue = string | number | null;
+export type { SqlValue } from './protocol';
 export type SqlBind = readonly SqlValue[] | Readonly<Record<string, SqlValue>>;
 
 /**
@@ -38,19 +39,21 @@ export function wrapDatabase(db: Database): SqlDb {
       return { changes: Number(db.changes()) };
     },
     transaction<T>(fn: () => T): T {
+      const outer = depth === 0;
       const savepoint = `sp${depth}`;
-      db.exec(depth === 0 ? 'BEGIN' : `SAVEPOINT ${savepoint}`);
+      db.exec(outer ? 'BEGIN' : `SAVEPOINT ${savepoint}`);
       depth++;
+      let result: T;
       try {
-        const result = fn();
-        depth--;
-        db.exec(depth === 0 ? 'COMMIT' : `RELEASE ${savepoint}`);
-        return result;
+        result = fn();
       } catch (err) {
         depth--;
-        db.exec(depth === 0 ? 'ROLLBACK' : `ROLLBACK TO ${savepoint}; RELEASE ${savepoint}`);
+        db.exec(outer ? 'ROLLBACK' : `ROLLBACK TO ${savepoint}; RELEASE ${savepoint}`);
         throw err;
       }
+      depth--;
+      db.exec(outer ? 'COMMIT' : `RELEASE ${savepoint}`);
+      return result;
     },
   };
 }

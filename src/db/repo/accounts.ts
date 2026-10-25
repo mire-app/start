@@ -79,7 +79,7 @@ const ACCOUNT_COLUMNS: Record<keyof UpdateAccountInput, string> = {
 export function updateAccount(db: SqlDb, id: string, patch: UpdateAccountInput): void {
   db.transaction(() => {
     const keys = (Object.keys(patch) as (keyof UpdateAccountInput)[]).filter(
-      (key) => key in ACCOUNT_COLUMNS && patch[key] !== undefined,
+      (key) => Object.hasOwn(ACCOUNT_COLUMNS, key) && patch[key] !== undefined,
     );
     const sets = keys.map((key) => `${ACCOUNT_COLUMNS[key]} = ?`);
     const values = keys.map((key) => patch[key] ?? null);

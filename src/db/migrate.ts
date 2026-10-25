@@ -14,7 +14,13 @@ export function loadMigrations(files: Record<string, string>): Migration[] {
       if (!match) throw new Error(`Invalid migration file name: ${path}`);
       return { version: Number(match[1]), name: match[2]!, sql };
     })
-    .sort((a, b) => a.version - b.version);
+    .sort((a, b) => a.version - b.version)
+    .map((migration, i, all) => {
+      if (migration.version === all[i - 1]?.version) {
+        throw new Error(`Duplicate migration version: ${migration.version}`);
+      }
+      return migration;
+    });
 }
 
 /**

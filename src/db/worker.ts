@@ -76,6 +76,8 @@ async function openDatabases(): Promise<Databases> {
 
 // Started when the worker loads: open and call requests wait for it.
 const databases = openDatabases();
+// Every request awaits it and reports the failure; this only avoids an unhandled rejection.
+databases.catch(() => {});
 
 function exec(smoke: Database, { sql, params }: Extract<Request, { type: 'exec' }>): Row[] {
   return smoke.exec({
