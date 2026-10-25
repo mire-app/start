@@ -18,6 +18,7 @@
     "title": "Local storage",
     "test": "Test storage",
     "count": "Current value",
+    "dbVersion": "Database: version",
     "busy": "Míre is already open in another tab",
     "error": "The local database could not be opened"
   },

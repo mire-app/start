@@ -1,9 +1,9 @@
-import { DbClient } from './client';
+import { type DbClient, dbClient } from './client';
 
-// Skeleton-only database: SPEC-0004 removes it when it creates the real one.
-const FILENAME = '/mire-smoke.sqlite3';
-
-/** Storage test: a single-row counter persisted in SQLite (OPFS). */
+/**
+ * Storage test: a single-row counter persisted in /mire-smoke.sqlite3 (OPFS), which the worker
+ * opens next to /mire.sqlite3. SPEC-0016 moves it to Settings › Diagnostics.
+ */
 export class SmokeStore {
   private static opening: Promise<SmokeStore> | undefined;
 
@@ -20,8 +20,8 @@ export class SmokeStore {
   }
 
   private static async create(): Promise<SmokeStore> {
-    const db = new DbClient();
-    await db.open(FILENAME);
+    const db = dbClient();
+    await db.open();
     await db.exec(
       'CREATE TABLE IF NOT EXISTS smoke(id INTEGER PRIMARY KEY CHECK (id = 1), n INTEGER NOT NULL)',
     );

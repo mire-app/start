@@ -2,7 +2,7 @@ import ErrorIcon from '@material-symbols/svg-400/rounded/error.svg?react';
 import InfoIcon from '@material-symbols/svg-400/rounded/info.svg?react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DbError } from './db/client';
+import { call, DbError, type Result } from './db/client';
 import { SmokeStore } from './db/smoke';
 import { LanguageSelect, ThemeSelect } from './preferences';
 import { Button } from './ui/button';
@@ -16,9 +16,13 @@ type StorageState =
   | { status: 'busy' }
   | { status: 'error' };
 
+type DbVersion = Result<'schemaVersion'>;
+
 export default function App() {
   const { t } = useTranslation();
   const [storage, setStorage] = useState<StorageState>({ status: 'opening' });
+  // undefined while opening; null if /mire.sqlite3 has no version (it failed to migrate).
+  const [dbVersion, setDbVersion] = useState<DbVersion | undefined>();
 
   useEffect(() => {
     let cancelled = false;
@@ -26,6 +30,8 @@ export default function App() {
       .then(async (store) => {
         const count = await store.count();
         if (!cancelled) setStorage({ status: 'ready', store, count });
+        const version = await call('schemaVersion', {}).catch(() => null);
+        if (!cancelled) setDbVersion(version);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -61,19 +67,31 @@ export default function App() {
               <span className="pt-px">{t('storage.busy')}</span>
             </p>
           )}
-          {storage.status === 'error' && (
+          {(storage.status === 'error' || (storage.status === 'ready' && dbVersion === null)) && (
             <p role="alert" className="mb-4 flex items-start gap-2 text-negative">
               <Icon icon={ErrorIcon} />
               <span className="pt-px">{t('storage.error')}</span>
             </p>
           )}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <p>
-              <span className="text-muted">{t('storage.count')}:</span>{' '}
-              <output data-testid="smoke-count" className="font-semibold tabular-nums">
-                {storage.status === 'ready' ? storage.count : '—'}
-              </output>
-            </p>
+            <div className="flex flex-col gap-1">
+              <p>
+                <span className="text-muted">{t('storage.count')}:</span>{' '}
+                <output data-testid="smoke-count" className="font-semibold tabular-nums">
+                  {storage.status === 'ready' ? storage.count : '—'}
+                </output>
+              </p>
+              <p>
+                <span className="text-muted">{t('storage.dbVersion')}</span>{' '}
+                <output
+                  data-testid="db-version"
+                  data-applied-at={dbVersion?.appliedAt}
+                  className="font-semibold tabular-nums"
+                >
+                  {dbVersion?.version ?? '—'}
+                </output>
+              </p>
+            </div>
             <Button
               variant="secondary"
               disabled={storage.status !== 'ready'}
